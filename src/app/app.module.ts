@@ -10,7 +10,7 @@ import { DashboardComponent } from './components/dashboard/dashboard.component';
 import { TesterRegistrationComponent } from './components/tester-registration/tester-registration.component';
 import { ProjectManagementComponent } from './components/project-management/project-management.component';
 import { TestCaseTrackingComponent } from './components/test-case-tracking/test-case-tracking.component';
-
+import { DropdownModule } from 'primeng/dropdown';
 import { ApiService } from './services/api.service';
 
 @NgModule({
@@ -27,7 +27,8 @@ import { ApiService } from './services/api.service';
     HttpClientModule,
     FormsModule,
     ReactiveFormsModule,
-    AppRoutingModule
+    AppRoutingModule,
+    DropdownModule
   ],
   providers: [ApiService],
   bootstrap: [AppComponent]

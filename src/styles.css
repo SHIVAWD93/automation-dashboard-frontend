@@ -2,7 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
-
+@import "primeng/resources/themes/lara-light-blue/theme.css";
+@import "primeng/resources/primeng.css";
 /* Global styles */
 * {
   margin: 0;
@@ -16,7 +17,7 @@ body {
   color: #333;
 }
 .nav-header{
-background: linear-gradient(90.02deg,white 1.25%,#fb923c 81.15%);
+background: linear-gradient(90.02deg,white 1.25%,#4b3cfb 130.15%);
 
 }
 
@@ -118,4 +119,9 @@ background: linear-gradient(90.02deg,white 1.25%,#fb923c 81.15%);
 .spinner-border {
   width: 1.5rem;
   height: 1.5rem;
+}
+
+.p-dropdown{
+  min-height: 36px;
+  min-width: 200px !important;
 }
