@@ -13,6 +13,7 @@ import { TestCaseTrackingComponent } from './components/test-case-tracking/test-
 import { BulkUploadComponent } from './components/bulk-upload/bulk-upload.component';
 
 
+import { DropdownModule } from 'primeng/dropdown';
 import { ApiService } from './services/api.service';
 
 @NgModule({
@@ -30,7 +31,8 @@ import { ApiService } from './services/api.service';
     HttpClientModule,
     FormsModule,
     ReactiveFormsModule,
-    AppRoutingModule
+    AppRoutingModule,
+    DropdownModule
   ],
   providers: [ApiService],
   bootstrap: [AppComponent]
