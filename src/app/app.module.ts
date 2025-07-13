@@ -14,6 +14,7 @@ import { BulkUploadComponent } from './components/bulk-upload/bulk-upload.compon
 
 
 import { DropdownModule } from 'primeng/dropdown';
+import { ButtonModule } from 'primeng/button';
 import { ApiService } from './services/api.service';
 
 @NgModule({
@@ -32,7 +33,8 @@ import { ApiService } from './services/api.service';
     FormsModule,
     ReactiveFormsModule,
     AppRoutingModule,
-    DropdownModule
+    DropdownModule,
+    ButtonModule
   ],
   providers: [ApiService],
   bootstrap: [AppComponent]

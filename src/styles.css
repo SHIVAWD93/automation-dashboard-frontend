@@ -1,24 +1,28 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 @import "primeng/resources/themes/lara-light-blue/theme.css";
 @import "primeng/resources/primeng.css";
-/* Global styles */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+
+@layer tailwind-base, primeng, tailwind-utilities;
+
+@layer tailwind-base {
+  @tailwind base;
 }
+@import "primeng/resources/themes/lara-light-blue/theme.css";
+@import "primeng/resources/primeng.css";
+@layer tailwind-utilities {
+  @tailwind components;
+  @tailwind utilities;
+}
+@layer bootstrap-reboot, primeng;
+
+/* Global styles */
 
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   background-color: #f8f9fa;
   color: #333;
 }
-.nav-header{
-background: linear-gradient(90.02deg,white 1.25%,#4b3cfb 130.15%);
-
+.nav-header {
+  background: linear-gradient(90.02deg, white 1.25%, #4b3cfb 130.15%);
 }
 
 /* Custom styles for the dashboard */
@@ -97,23 +101,49 @@ background: linear-gradient(90.02deg,white 1.25%,#4b3cfb 130.15%);
 }
 
 /* Status badges */
-.status-active { background-color: #28a745; }
-.status-inactive { background-color: #6c757d; }
-.status-planning { background-color: #ffc107; }
-.status-testing { background-color: #17a2b8; }
-.status-automated { background-color: #28a745; }
-.status-manual { background-color: #007bff; }
-.status-in-progress { background-color: #ffc107; }
-.status-ready { background-color: #17a2b8; }
+.status-active {
+  background-color: #28a745;
+}
+.status-inactive {
+  background-color: #6c757d;
+}
+.status-planning {
+  background-color: #ffc107;
+}
+.status-testing {
+  background-color: #17a2b8;
+}
+.status-automated {
+  background-color: #28a745;
+}
+.status-manual {
+  background-color: #007bff;
+}
+.status-in-progress {
+  background-color: #ffc107;
+}
+.status-ready {
+  background-color: #17a2b8;
+}
 
 /* Priority badges */
-.priority-high { background-color: #dc3545; }
-.priority-medium { background-color: #ffc107; }
-.priority-low { background-color: #6c757d; }
+.priority-high {
+  background-color: #dc3545;
+}
+.priority-medium {
+  background-color: #ffc107;
+}
+.priority-low {
+  background-color: #6c757d;
+}
 
 /* Role badges */
-.role-automation { background-color: #28a745; }
-.role-manual { background-color: #007bff; }
+.role-automation {
+  background-color: #28a745;
+}
+.role-manual {
+  background-color: #007bff;
+}
 
 /* Loading spinner */
 .spinner-border {
@@ -121,7 +151,7 @@ background: linear-gradient(90.02deg,white 1.25%,#4b3cfb 130.15%);
   height: 1.5rem;
 }
 
-.p-dropdown{
+.p-dropdown {
   min-height: 36px;
   min-width: 200px !important;
 }

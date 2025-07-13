@@ -11,6 +11,9 @@
             Create, manage, and track test cases across your automation projects
           </p>
         </div>
+        <div>
+          <p-button label="Bulk upload" (onClick)="showPopup = !showPopup"></p-button>
+        </div>
       </div>
     </div>
   </div>
@@ -265,3 +268,4 @@
     </div>
   </div>
 </div>
+<app-bulk-upload [isVisible]="showPopup" (close)="showPopup = !showPopup"></app-bulk-upload>

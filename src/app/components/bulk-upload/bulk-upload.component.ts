@@ -33,7 +33,7 @@ interface ExcelTestCase {
 export class BulkUploadComponent implements OnInit {
   @Input() projects: Project[] = [];
   @Input() testers: Tester[] = [];
-  @Input() isVisible: boolean = false;
+  @Input() isVisible: boolean = true;
   @Output() close = new EventEmitter<void>();
   @Output() uploadComplete = new EventEmitter<void>();
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
