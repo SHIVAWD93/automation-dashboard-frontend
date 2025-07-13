@@ -10,6 +10,8 @@ import { DashboardComponent } from './components/dashboard/dashboard.component';
 import { TesterRegistrationComponent } from './components/tester-registration/tester-registration.component';
 import { ProjectManagementComponent } from './components/project-management/project-management.component';
 import { TestCaseTrackingComponent } from './components/test-case-tracking/test-case-tracking.component';
+import { BulkUploadComponent } from './components/bulk-upload/bulk-upload.component';
+
 
 import { ApiService } from './services/api.service';
 
@@ -19,7 +21,8 @@ import { ApiService } from './services/api.service';
     DashboardComponent,
     TesterRegistrationComponent,
     ProjectManagementComponent,
-    TestCaseTrackingComponent
+    TestCaseTrackingComponent,
+    BulkUploadComponent
   ],
   imports: [
     BrowserModule,
