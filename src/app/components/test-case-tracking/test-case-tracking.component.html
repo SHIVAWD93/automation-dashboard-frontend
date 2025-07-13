@@ -1,7 +1,7 @@
 <div class="test-case-tracking-container">
   <div class="row">
     <div class="col-12">
-      <div class="card header-card">
+      <div class="card header-card flex flex-row">
         <div class="card-body">
           <h2 class="card-title">
             <i class="fas fa-tasks me-2"></i>
@@ -10,6 +10,9 @@
           <p class="card-text text-muted">
             Create, manage, and track test cases across your automation projects
           </p>
+        </div>
+        <div class="flex items-center pr-4">
+          <p-button label="Bulk upload" (onClick)="showPopup = !showPopup"></p-button>
         </div>
       </div>
     </div>
@@ -265,3 +268,4 @@
     </div>
   </div>
 </div>
+<app-bulk-upload [isVisible]="showPopup" (close)="showPopup = !showPopup"></app-bulk-upload>

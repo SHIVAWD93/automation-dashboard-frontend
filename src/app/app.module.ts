@@ -10,10 +10,11 @@ import { DashboardComponent } from './components/dashboard/dashboard.component';
 import { TesterRegistrationComponent } from './components/tester-registration/tester-registration.component';
 import { ProjectManagementComponent } from './components/project-management/project-management.component';
 import { TestCaseTrackingComponent } from './components/test-case-tracking/test-case-tracking.component';
-import { DropdownModule } from 'primeng/dropdown';
 import { BulkUploadComponent } from './components/bulk-upload/bulk-upload.component';
 
 
+import { DropdownModule } from 'primeng/dropdown';
+import { ButtonModule } from 'primeng/button';
 import { ApiService } from './services/api.service';
 
 @NgModule({
@@ -32,7 +33,8 @@ import { ApiService } from './services/api.service';
     FormsModule,
     ReactiveFormsModule,
     AppRoutingModule,
-    DropdownModule
+    DropdownModule,
+    ButtonModule
   ],
   providers: [ApiService],
   bootstrap: [AppComponent]
