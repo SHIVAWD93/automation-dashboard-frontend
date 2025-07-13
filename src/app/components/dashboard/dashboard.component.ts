@@ -16,6 +16,7 @@ export class DashboardComponent implements OnInit {
   dashboardStats: any = {};
   coverageChart: any;
   statusChart: any;
+  domainNames:any;
   loading = false;
 
   constructor(private apiService: ApiService) {}
@@ -23,6 +24,11 @@ export class DashboardComponent implements OnInit {
   ngOnInit(): void {
     this.loadProjects();
     this.loadDashboardStats();
+    this.apiService.getDomainNames().subscribe(
+      (domains) =>{
+        this.domainNames = domains;
+      }
+    )
   }
 
   loadProjects(): void {

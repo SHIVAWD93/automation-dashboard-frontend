@@ -68,7 +68,10 @@
             <i class="fas fa-filter me-2"></i>
             Project-wise Test Case Status
           </h5>
-          <div class="project-selector">
+          <div class="project-selector flex">
+            <div class="pr-4">
+            <p-dropdown [options]="domainNames" optionLabel="name" optionValue="code"></p-dropdown>
+            </div>
             <select class="form-select" [(ngModel)]="selectedProject" (change)="onProjectChange()">
               <option *ngFor="let project of projects" [ngValue]="project">
                 {{ project.name }}
