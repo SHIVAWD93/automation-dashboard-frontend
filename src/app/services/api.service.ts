@@ -10,7 +10,7 @@ import { TestCase } from "../models/test-case.model";
   providedIn: "root",
 })
 export class ApiService {
-  private baseUrl = "http://localhost:8000/api";
+  private baseUrl = "http://54.89.215.112:8000/api";
 
   constructor(private http: HttpClient) {}
 
