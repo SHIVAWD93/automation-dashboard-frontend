@@ -21,6 +21,7 @@ export class TestCaseTrackingComponent implements OnInit {
   selectedProject: Project | null = null;
   filteredTestCases: TestCase[] = [];
   searchTerm = '';
+  showPopup: boolean = false;
   
   // Sorting properties
   currentSort = { column: '', direction: 'asc' };
