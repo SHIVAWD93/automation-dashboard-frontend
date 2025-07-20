@@ -16,21 +16,43 @@
             <form [formGroup]="uploadForm" *ngIf="!showResult">
                 <div class="form-row">
                     <div class="form-group">
+                        <label for="domainId" class="form-label">Select Domain *</label>
+                        <select
+                                class="form-control"
+                                id="domainId"
+                                formControlName="domainId"
+                                [class.is-invalid]="uploadForm.get('domainId')?.invalid && uploadForm.get('domainId')?.touched"
+                        >
+                            <option value="">Choose Domain</option>
+                            <option *ngFor="let domain of domains" [value]="domain.id">
+                                {{ domain.name }}
+                            </option>
+                        </select>
+                        <div class="invalid-feedback" *ngIf="uploadForm.get('domainId')?.invalid && uploadForm.get('domainId')?.touched">
+                            Please select a domain.
+                        </div>
+                    </div>
+
+                    <div class="form-group">
                         <label for="projectId" class="form-label">Select Project *</label>
                         <select
                                 class="form-control"
                                 id="projectId"
                                 formControlName="projectId"
                                 [class.is-invalid]="uploadForm.get('projectId')?.invalid && uploadForm.get('projectId')?.touched"
+                                [disabled]="!uploadForm.get('domainId')?.value"
                         >
                             <option value="">Choose Project</option>
-                            <option *ngFor="let project of projects" [value]="project.id">
+                            <option *ngFor="let project of filteredProjects" [value]="project.id">
                                 {{ project.name }}
                             </option>
                         </select>
                         <div class="invalid-feedback" *ngIf="uploadForm.get('projectId')?.invalid && uploadForm.get('projectId')?.touched">
                             Please select a project.
                         </div>
+                        <small class="form-text" *ngIf="!uploadForm.get('domainId')?.value">
+                            Please select a domain first to see available projects.
+                        </small>
                     </div>
 
                     <div class="form-group">

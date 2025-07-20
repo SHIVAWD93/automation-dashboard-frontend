@@ -278,4 +278,69 @@
   .search-box {
     min-width: 100%;
   }
+  /* Add these styles to your test-case-tracking.component.css */
+
+  .header-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+
+  .btn-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+  }
+
+  .btn-success:hover {
+    background: linear-gradient(135deg, #218838 0%, #1e7e34 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+  }
+
+  .bulk-upload-success {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1050;
+    padding: 15px 20px;
+    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+    border: 1px solid #c3e6cb;
+    border-radius: 8px;
+    color: #155724;
+    animation: slideInRight 0.3s ease-out;
+  }
+
+  @keyframes slideInRight {
+    from {
+      opacity: 0;
+      transform: translateX(100%);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  /* Mobile responsiveness updates */
+  @media (max-width: 768px) {
+    .header-controls {
+      flex-direction: column;
+      align-items: stretch;
+      width: 100%;
+      margin-top: 1rem;
+    }
+
+    .filter-controls {
+      width: 100%;
+    }
+
+    .btn-success {
+      width: 100%;
+      justify-content: center;
+    }
+  }
 }

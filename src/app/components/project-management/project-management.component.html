@@ -28,28 +28,32 @@
         <div class="card-body">
           <form [formGroup]="projectForm" (ngSubmit)="onSubmit()">
             <div class="mb-3">
-              <label for="name" class="form-label">Domain name</label>
+              <label for="domainId" class="form-label">Domain *</label>
+              <select
+                      class="form-control"
+                      id="domainId"
+                      formControlName="domainId"
+                      [class.is-invalid]="projectForm.get('domainId')?.invalid && projectForm.get('domainId')?.touched"
+              >
+                <option value="">Select Domain</option>
+                <option *ngFor="let domain of domains" [value]="domain.id">
+                  {{ domain.name }}
+                </option>
+              </select>
+              <div class="invalid-feedback" *ngIf="projectForm.get('domainId')?.invalid && projectForm.get('domainId')?.touched">
+                Please select a domain.
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="name" class="form-label">Project Name *</label>
               <input
                       type="text"
                       class="form-control"
-                      id="domainName"
+                      id="name"
                       formControlName="name"
-                      [class.is-invalid]="projectForm.get('domainName')?.invalid && projectForm.get('domainName')?.touched"
-                      placeholder="Enter Domain name"
-              >
-              <div class="invalid-feedback" *ngIf="projectForm.get('name')?.invalid && projectForm.get('name')?.touched">
-                Domain name is required and must be at least 3 characters long.
-              </div>
-            </div>
-            <div class="mb-3">
-              <label for="name" class="form-label">Project Name</label>
-              <input 
-                type="text" 
-                class="form-control" 
-                id="name" 
-                formControlName="name"
-                [class.is-invalid]="projectForm.get('name')?.invalid && projectForm.get('name')?.touched"
-                placeholder="Enter project name"
+                      [class.is-invalid]="projectForm.get('name')?.invalid && projectForm.get('name')?.touched"
+                      placeholder="Enter project name"
               >
               <div class="invalid-feedback" *ngIf="projectForm.get('name')?.invalid && projectForm.get('name')?.touched">
                 Project name is required and must be at least 3 characters long.
@@ -57,14 +61,14 @@
             </div>
 
             <div class="mb-3">
-              <label for="description" class="form-label">Description</label>
-              <textarea 
-                class="form-control" 
-                id="description" 
-                rows="4"
-                formControlName="description"
-                [class.is-invalid]="projectForm.get('description')?.invalid && projectForm.get('description')?.touched"
-                placeholder="Enter project description"
+              <label for="description" class="form-label">Description *</label>
+              <textarea
+                      class="form-control"
+                      id="description"
+                      rows="4"
+                      formControlName="description"
+                      [class.is-invalid]="projectForm.get('description')?.invalid && projectForm.get('description')?.touched"
+                      placeholder="Enter project description"
               ></textarea>
               <div class="invalid-feedback" *ngIf="projectForm.get('description')?.invalid && projectForm.get('description')?.touched">
                 Description is required and must be at least 10 characters long.
@@ -72,12 +76,12 @@
             </div>
 
             <div class="mb-3">
-              <label for="status" class="form-label">Status</label>
-              <select 
-                class="form-select" 
-                id="status" 
-                formControlName="status"
-                [class.is-invalid]="projectForm.get('status')?.invalid && projectForm.get('status')?.touched"
+              <label for="status" class="form-label">Status *</label>
+              <select
+                      class="form-select"
+                      id="status"
+                      formControlName="status"
+                      [class.is-invalid]="projectForm.get('status')?.invalid && projectForm.get('status')?.touched"
               >
                 <option value="Active">Active</option>
                 <option value="Inactive">Inactive</option>
@@ -89,19 +93,19 @@
             </div>
 
             <div class="d-grid gap-2">
-              <button 
-                type="submit" 
-                class="btn btn-primary"
-                [disabled]="!projectForm.valid || loading"
+              <button
+                      type="submit"
+                      class="btn btn-primary"
+                      [disabled]="!projectForm.valid || loading"
               >
                 <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
                 <i class="fas fa-save me-2" *ngIf="!loading"></i>
                 {{ loading ? 'Saving...' : (editingProject ? 'Update Project' : 'Create Project') }}
               </button>
-              <button 
-                type="button" 
-                class="btn btn-secondary"
-                (click)="resetForm()"
+              <button
+                      type="button"
+                      class="btn btn-secondary"
+                      (click)="resetForm()"
               >
                 <i class="fas fa-undo me-2"></i>
                 {{ editingProject ? 'Cancel' : 'Reset' }}
@@ -115,14 +119,29 @@
     <div class="col-lg-8">
       <div class="card">
         <div class="card-header">
-          <h5 class="card-title mb-0">
-            <i class="fas fa-folder me-2"></i>
-            Projects ({{ projects.length }})
-          </h5>
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">
+              <i class="fas fa-folder me-2"></i>
+              Projects ({{ filteredProjects.length }})
+            </h5>
+            <div class="filter-section">
+              <select
+                      class="form-select form-select-sm"
+                      [(ngModel)]="selectedDomainFilter"
+                      (change)="onDomainFilterChange()"
+                      style="width: 200px;"
+              >
+                <option value="">All Domains</option>
+                <option *ngFor="let domain of domains" [value]="domain.id">
+                  {{ domain.name }}
+                </option>
+              </select>
+            </div>
+          </div>
         </div>
         <div class="card-body">
-          <div class="row" *ngIf="projects.length > 0; else noProjects">
-            <div class="col-md-6 col-lg-6 mb-3" *ngFor="let project of projects">
+          <div class="row" *ngIf="filteredProjects.length > 0; else noProjects">
+            <div class="col-md-6 col-lg-6 mb-3" *ngFor="let project of filteredProjects">
               <div class="card project-card">
                 <div class="card-body">
                   <div class="d-flex justify-content-between align-items-start mb-3">
@@ -131,11 +150,18 @@
                       {{ project.status }}
                     </span>
                   </div>
-                  
+
                   <p class="card-text text-muted small">
                     {{ project.description }}
                   </p>
-                  
+
+                  <div class="domain-info mb-2">
+                    <small class="text-primary">
+                      <i class="fas fa-layer-group me-1"></i>
+                      {{ project.domain?.name }}
+                    </small>
+                  </div>
+
                   <div class="project-info">
                     <div class="row">
                       <div class="col-6">
@@ -152,18 +178,18 @@
                       </div>
                     </div>
                   </div>
-                  
+
                   <div class="card-actions mt-3">
-                    <button 
-                      class="btn btn-outline-primary btn-sm me-2"
-                      (click)="editProject(project)"
+                    <button
+                            class="btn btn-outline-primary btn-sm me-2"
+                            (click)="editProject(project)"
                     >
                       <i class="fas fa-edit"></i>
                       Edit
                     </button>
-                    <button 
-                      class="btn btn-outline-danger btn-sm"
-                      (click)="deleteProject(project.id)"
+                    <button
+                            class="btn btn-outline-danger btn-sm"
+                            (click)="deleteProject(project.id)"
                     >
                       <i class="fas fa-trash"></i>
                       Delete
@@ -173,12 +199,12 @@
               </div>
             </div>
           </div>
-          
+
           <ng-template #noProjects>
             <div class="text-center py-5">
               <i class="fas fa-folder-open text-muted" style="font-size: 4rem;"></i>
-              <h5 class="mt-3 text-muted">No projects created yet</h5>
-              <p class="text-muted">Create your first project to get started with test case management</p>
+              <h5 class="mt-3 text-muted">No projects found</h5>
+              <p class="text-muted">{{ selectedDomainFilter ? 'No projects found for selected domain' : 'Create your first project to get started with test case management' }}</p>
             </div>
           </ng-template>
         </div>

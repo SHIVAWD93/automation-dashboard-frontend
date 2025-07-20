@@ -11,11 +11,25 @@ import { TesterRegistrationComponent } from './components/tester-registration/te
 import { ProjectManagementComponent } from './components/project-management/project-management.component';
 import { TestCaseTrackingComponent } from './components/test-case-tracking/test-case-tracking.component';
 import { BulkUploadComponent } from './components/bulk-upload/bulk-upload.component';
+import { JenkinsResultsComponent } from './components/jenkins-results/jenkins-results.component';
 
 
 import { DropdownModule } from 'primeng/dropdown';
 import { ButtonModule } from 'primeng/button';
 import { ApiService } from './services/api.service';
+
+// Custom Pipe for filtering (if needed)
+import { Pipe, PipeTransform } from '@angular/core';
+
+@Pipe({name: 'filter'})
+export class FilterPipe implements PipeTransform {
+  transform(items: any[], field: string, value: any): any[] {
+    if (!items || !field || value === undefined) {
+      return items;
+    }
+    return items.filter(item => item[field] === value);
+  }
+}
 
 @NgModule({
   declarations: [
@@ -24,7 +38,9 @@ import { ApiService } from './services/api.service';
     TesterRegistrationComponent,
     ProjectManagementComponent,
     TestCaseTrackingComponent,
-    BulkUploadComponent
+    BulkUploadComponent,
+    JenkinsResultsComponent,
+    FilterPipe
   ],
   imports: [
     BrowserModule,

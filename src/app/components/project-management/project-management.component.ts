@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ApiService } from '../../services/api.service';
-import { Project } from '../../models/project.model';
+import { Project, Domain } from '../../models/project.model';
 
 @Component({
   selector: 'app-project-management',
@@ -11,14 +11,18 @@ import { Project } from '../../models/project.model';
 export class ProjectManagementComponent implements OnInit {
   projectForm: FormGroup;
   projects: Project[] = [];
+  domains: Domain[] = [];
+  filteredProjects: Project[] = [];
   loading = false;
   editingProject: Project | null = null;
+  selectedDomainFilter: string = '';
 
   constructor(
     private fb: FormBuilder,
     private apiService: ApiService
   ) {
     this.projectForm = this.fb.group({
+      domainId: ['', Validators.required],
       name: ['', [Validators.required, Validators.minLength(3)]],
       description: ['', [Validators.required, Validators.minLength(10)]],
       status: ['Active', Validators.required]
@@ -26,13 +30,35 @@ export class ProjectManagementComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.loadDomains();
     this.loadProjects();
+  }
+
+  loadDomains(): void {
+    this.apiService.getActiveDomains().subscribe(
+      (data: Domain[]) => {
+        this.domains = data;
+      },
+      (error) => {
+        console.error('Error loading domains:', error);
+      }
+    );
   }
 
   onSubmit(): void {
     if (this.projectForm.valid) {
       this.loading = true;
-      const projectData = this.projectForm.value;
+      const formData = this.projectForm.value;
+
+      // Create project data with domain reference
+      const projectData: any = {
+        name: formData.name,
+        description: formData.description,
+        status: formData.status,
+        domain: {
+          id: formData.domainId
+        }
+      };
 
       if (this.editingProject) {
         this.apiService.updateProject(this.editingProject.id, projectData).subscribe(
@@ -43,6 +69,7 @@ export class ProjectManagementComponent implements OnInit {
           },
           (error) => {
             console.error('Error updating project:', error);
+            alert('Error updating project: ' + (error.error || error.message));
             this.loading = false;
           }
         );
@@ -55,6 +82,7 @@ export class ProjectManagementComponent implements OnInit {
           },
           (error) => {
             console.error('Error creating project:', error);
+            alert('Error creating project: ' + (error.error || error.message));
             this.loading = false;
           }
         );
@@ -66,6 +94,7 @@ export class ProjectManagementComponent implements OnInit {
     this.apiService.getProjects().subscribe(
       (data: Project[]) => {
         this.projects = data;
+        this.applyDomainFilter();
       },
       (error) => {
         console.error('Error loading projects:', error);
@@ -73,9 +102,24 @@ export class ProjectManagementComponent implements OnInit {
     );
   }
 
+  onDomainFilterChange(): void {
+    this.applyDomainFilter();
+  }
+
+  applyDomainFilter(): void {
+    if (this.selectedDomainFilter) {
+      this.filteredProjects = this.projects.filter(project =>
+        project.domain && project.domain.id.toString() === this.selectedDomainFilter
+      );
+    } else {
+      this.filteredProjects = [...this.projects];
+    }
+  }
+
   editProject(project: Project): void {
     this.editingProject = project;
     this.projectForm.patchValue({
+      domainId: project.domain ? project.domain.id : '',
       name: project.name,
       description: project.description,
       status: project.status
@@ -90,6 +134,7 @@ export class ProjectManagementComponent implements OnInit {
         },
         (error) => {
           console.error('Error deleting project:', error);
+          alert('Error deleting project: ' + (error.error || error.message));
         }
       );
     }
@@ -112,5 +157,10 @@ export class ProjectManagementComponent implements OnInit {
       default:
         return 'bg-secondary';
     }
+  }
+
+  getDomainName(domainId: number): string {
+    const domain = this.domains.find(d => d.id === domainId);
+    return domain ? domain.name : 'Unknown Domain';
   }
 }
