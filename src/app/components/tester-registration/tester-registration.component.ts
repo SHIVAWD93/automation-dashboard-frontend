@@ -22,7 +22,8 @@ export class TesterRegistrationComponent implements OnInit {
     this.testerForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(2)]],
       role: ['', Validators.required],
-      gender: ['', Validators.required]
+      gender: ['', Validators.required],
+      experience: [0, [Validators.required, Validators.min(0)]] // Added experience field
     });
   }
 
@@ -34,7 +35,7 @@ export class TesterRegistrationComponent implements OnInit {
     const file = event.target.files[0];
     if (file) {
       this.selectedFile = file;
-      
+
       // Create preview
       const reader = new FileReader();
       reader.onload = (e: any) => {
@@ -47,37 +48,66 @@ export class TesterRegistrationComponent implements OnInit {
   onSubmit(): void {
     if (this.testerForm.valid) {
       this.loading = true;
-      const formData = new FormData();
-      
-      formData.append('name', this.testerForm.get('name')?.value);
-      formData.append('role', this.testerForm.get('role')?.value);
-      formData.append('gender', this.testerForm.get('gender')?.value);
-      
-      if (this.selectedFile) {
-        formData.append('profileImage', this.selectedFile);
-      }
 
-      this.apiService.createTester(formData).subscribe(
-        (response) => {
-          this.loadTesters();
-          this.resetForm();
-          this.loading = false;
-        },
-        (error) => {
-          console.error('Error creating tester:', error);
-          this.loading = false;
-        }
-      );
+      // Create tester data object
+      const testerData: Partial<Tester> = {
+        name: this.testerForm.get('name')?.value,
+        role: this.testerForm.get('role')?.value,
+        gender: this.testerForm.get('gender')?.value,
+        experience: this.testerForm.get('experience')?.value || 0
+      };
+
+      // If there's a file, create FormData, otherwise send JSON
+      if (this.selectedFile) {
+        const formData = new FormData();
+        formData.append('name', testerData.name!);
+        formData.append('role', testerData.role!);
+        formData.append('gender', testerData.gender!);
+        formData.append('experience', testerData.experience!.toString());
+        formData.append('profileImage', this.selectedFile);
+
+        // You'll need to add this method to your API service for file upload
+        this.apiService.createTesterWithImage(formData).subscribe(
+          (response) => {
+            console.log('Tester created successfully:', response);
+            this.loadTesters();
+            this.resetForm();
+            this.loading = false;
+          },
+          (error) => {
+            console.error('Error creating tester:', error);
+            this.loading = false;
+          }
+        );
+      } else {
+        // Send as JSON without file
+        this.apiService.createTester(testerData as Tester).subscribe(
+          (response) => {
+            console.log('Tester created successfully:', response);
+            this.loadTesters();
+            this.resetForm();
+            this.loading = false;
+          },
+          (error) => {
+            console.error('Error creating tester:', error);
+            this.loading = false;
+          }
+        );
+      }
     }
   }
 
   loadTesters(): void {
+    console.log('Loading testers...'); // Debug log
     this.apiService.getTesters().subscribe(
       (data: Tester[]) => {
+        console.log('Testers loaded:', data); // Debug log
         this.testers = data;
       },
       (error) => {
         console.error('Error loading testers:', error);
+        // Set empty array on error to prevent undefined issues
+        this.testers = [];
       }
     );
   }
@@ -86,6 +116,7 @@ export class TesterRegistrationComponent implements OnInit {
     if (confirm('Are you sure you want to delete this tester?')) {
       this.apiService.deleteTester(id).subscribe(
         () => {
+          console.log('Tester deleted successfully');
           this.loadTesters();
         },
         (error) => {

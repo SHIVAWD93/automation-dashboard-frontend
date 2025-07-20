@@ -2,6 +2,7 @@ import { Component, OnInit, Input, Output, EventEmitter, ViewChild, ElementRef }
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ApiService } from '../../services/api.service';
 import { Project } from '../../models/project.model';
+import { Domain } from '../../models/domain.model';
 import { Tester } from '../../models/tester.model';
 import { TestCase } from '../../models/test-case.model';
 import * as XLSX from 'xlsx';
@@ -28,7 +29,7 @@ interface ExcelTestCase {
 @Component({
   selector: 'app-bulk-upload',
   templateUrl: './bulk-upload.component.html',
-  styleUrl: './bulk-upload.component.css'
+  styleUrls: ['./bulk-upload.component.css']
 })
 export class BulkUploadComponent implements OnInit {
   @Input() projects: Project[] = [];
@@ -39,6 +40,8 @@ export class BulkUploadComponent implements OnInit {
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
 
   uploadForm: FormGroup;
+  domains: Domain[] = [];
+  filteredProjects: Project[] = [];
   selectedFile: File | null = null;
   uploading: boolean = false;
   uploadResult: BulkUploadResult | null = null;
@@ -59,13 +62,52 @@ export class BulkUploadComponent implements OnInit {
     private apiService: ApiService
   ) {
     this.uploadForm = this.fb.group({
+      domainId: ['', Validators.required],
       projectId: ['', Validators.required],
       defaultTesterId: ['', Validators.required]
     });
   }
 
-  ngOnInit(): void {
-    // Component initialization
+ ngOnInit(): void {
+   this.loadDomains();
+   this.loadTesters(); // Add this line
+   this.setupFormSubscriptions();
+ }
+
+  loadDomains(): void {
+    this.apiService.getActiveDomains().subscribe(
+      (data: Domain[]) => {
+        this.domains = data;
+      },
+      (error) => {
+        console.error('Error loading domains:', error);
+      }
+    );
+  }
+
+  setupFormSubscriptions(): void {
+    // When domain changes, update projects list
+    this.uploadForm.get('domainId')?.valueChanges.subscribe(domainId => {
+      if (domainId) {
+        this.loadProjectsByDomain(domainId);
+      } else {
+        this.filteredProjects = [];
+      }
+      // Reset project selection when domain changes
+      this.uploadForm.patchValue({ projectId: '' });
+    });
+  }
+
+  loadProjectsByDomain(domainId: number): void {
+    this.apiService.getProjectsByDomain(domainId).subscribe(
+      (data: Project[]) => {
+        this.filteredProjects = data.filter(project => project.status === 'Active');
+      },
+      (error) => {
+        console.error('Error loading projects by domain:', error);
+        this.filteredProjects = [];
+      }
+    );
   }
 
   onDragOver(event: DragEvent): void {
@@ -128,7 +170,7 @@ export class BulkUploadComponent implements OnInit {
   }
 
   downloadTemplate(): void {
-    const selectedProject = this.projects.find(p => p.id === this.uploadForm.get('projectId')?.value);
+    const selectedProject = this.filteredProjects.find(p => p.id === this.uploadForm.get('projectId')?.value);
 
     // Create sample data for template
     const sampleData: ExcelTestCase[] = [
@@ -171,7 +213,8 @@ export class BulkUploadComponent implements OnInit {
 
     // Generate filename
     const projectName = selectedProject ? selectedProject.name.replace(/[^a-zA-Z0-9]/g, '_') : 'Project';
-    const filename = `TestCases_Template_${projectName}_${new Date().toISOString().split('T')[0]}.xlsx`;
+    const domainName = this.getDomainName(this.uploadForm.get('domainId')?.value);
+    const filename = `TestCases_Template_${domainName}_${projectName}_${new Date().toISOString().split('T')[0]}.xlsx`;
 
     // Save file
     XLSX.writeFile(wb, filename);
@@ -317,15 +360,14 @@ export class BulkUploadComponent implements OnInit {
   private async checkForDuplicate(title: string, projectId: number): Promise<boolean> {
     try {
       // Check if the method exists in ApiService
-      if (this.apiService.getTestCases) {
-        const allTestCases = await this.apiService.getTestCases().toPromise();
+      if (this.apiService.getTestCasesByProject) {
+        const projectTestCases = await this.apiService.getTestCasesByProject(projectId).toPromise();
 
         // Add null/undefined check
-        if (!allTestCases) {
+        if (!projectTestCases) {
           return false;
         }
 
-        const projectTestCases = allTestCases.filter((tc: TestCase) => tc.projectId === projectId);
         return projectTestCases.some((tc: TestCase) => tc.title.toLowerCase() === title.toLowerCase());
       }
       return false;
@@ -340,16 +382,36 @@ export class BulkUploadComponent implements OnInit {
     this.uploadResult = null;
     this.showResult = false;
     this.uploadForm.reset();
+    this.filteredProjects = [];
     this.close.emit();
   }
 
+  getDomainName(domainId: number): string {
+    const domain = this.domains.find(d => d.id === domainId);
+    return domain ? domain.name.replace(/[^a-zA-Z0-9]/g, '_') : 'Unknown_Domain';
+  }
+
   getProjectName(projectId: number): string {
-    const project = this.projects.find(p => p.id === projectId);
+    const project = this.filteredProjects.find(p => p.id === projectId);
     return project ? project.name : 'Unknown Project';
   }
 
   getTesterName(testerId: number): string {
     const tester = this.testers.find(t => t.id === testerId);
     return tester ? tester.name : 'Unknown Tester';
+  }
+  // Add this method to load testers
+  loadTesters(): void {
+    console.log('Loading testers for bulk upload...'); // Debug log
+    this.apiService.getTesters().subscribe(
+      (data: Tester[]) => {
+        console.log('Testers loaded for bulk upload:', data); // Debug log
+        this.testers = data || []; // Ensure it's always an array
+      },
+      (error) => {
+        console.error('Error loading testers for bulk upload:', error);
+        this.testers = []; // Set empty array on error
+      }
+    );
   }
 }
