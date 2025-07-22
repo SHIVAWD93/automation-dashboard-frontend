@@ -7,12 +7,13 @@ import { Domain } from '../models/project.model';
 import { TestCase } from '../models/test-case.model';
 import { Tester } from '../models/tester.model';
 import { JenkinsResult, JenkinsTestCase, JenkinsStatistics, JenkinsConnectionTest } from '../models/jenkins.model';
+import { environment } from '../../environment/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ApiService {
-private baseUrl = 'http://localhost:8000/api';
+private baseUrl = environment.apiUrl;
 
   private httpOptions = {
     headers: new HttpHeaders({
