@@ -8,7 +8,7 @@
             Automation Coverage Dashboard
           </h2>
           <p class="card-text text-muted">
-            Track your QA automation progress and project metrics
+            Track your QA automation progress and Application metrics
           </p>
         </div>
       </div>
@@ -39,7 +39,7 @@
         <div class="card-body text-center">
           <i class="fas fa-project-diagram stats-icon text-success"></i>
           <h3 class="mt-2">{{ dashboardStats.totalProjects || 0 }}</h3>
-          <p class="text-muted">Active Projects</p>
+          <p class="text-muted">Active Applications</p>
         </div>
       </div>
     </div>
@@ -75,7 +75,7 @@
         <div class="card-header">
           <h5 class="card-title mb-0">
             <i class="fas fa-filter me-2"></i>
-            Domain & Project-wise Test Case Status
+            Domain & Application-wise Test Case Status
           </h5>
           <div class="project-selector">
             <div class="row">
@@ -94,7 +94,7 @@
                 </select>
               </div>
               <div class="col-md-6">
-                <label for="projectSelect" class="form-label">Project</label>
+                <label for="projectSelect" class="form-label">Application</label>
                 <select
                         id="projectSelect"
                         class="form-select form-select-sm"
@@ -102,7 +102,7 @@
                         (change)="onProjectChange()"
                         [disabled]="!selectedDomainId"
                 >
-                  <option value="">All Projects</option>
+                  <option value="">All Applications</option>
                   <option *ngFor="let project of filteredProjects" [value]="project.id">
                     {{ project.name }}
                   </option>
@@ -158,20 +158,61 @@
                   <span class="stat-label">Total Test Cases</span>
                 </div>
                 <div class="stat-item">
-                  <span class="stat-value text-success">{{ projectTestCaseStats.automated }}</span>
-                  <span class="stat-label">Automated</span>
+                  <span class="stat-value text-info">{{ projectTestCaseStats.ready }}</span>
+                  <span class="stat-label">Ready to Automate</span>
                 </div>
                 <div class="stat-item">
                   <span class="stat-value text-warning">{{ projectTestCaseStats.inProgress }}</span>
                   <span class="stat-label">In Progress</span>
                 </div>
                 <div class="stat-item">
-                  <span class="stat-value text-info">{{ projectTestCaseStats.ready }}</span>
-                  <span class="stat-label">Ready to Automate</span>
+                  <span class="stat-value text-success">{{ projectTestCaseStats.automated }}</span>
+                  <span class="stat-label">Automated</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-value text-success">{{ projectTestCaseStats.completed }}</span>
+                  <span class="stat-label">Completed</span>
                 </div>
               </div>
             </div>
+<!--            <div class="stats-container">-->
+<!--              <div class="stats-header">-->
+<!--                <h2 class="stats-title">-->
+<!--                  <div class="stats-icon">📊</div>-->
+<!--                  Test Case Analytics-->
+<!--                </h2>-->
+<!--                <p class="stats-subtitle">Real-time automation progress tracking</p>-->
+<!--              </div>-->
+
+<!--              <div class="stats-grid">-->
+<!--                <div class="stat-card total">-->
+<!--                  <div class="stat-icon-small">📋</div>-->
+<!--                  <span class="stat-value">{{ projectTestCaseStats.total }}</span>-->
+<!--                  <span class="stat-label">Total Cases</span>-->
+<!--                </div>-->
+
+<!--                <div class="stat-card automated">-->
+<!--                  <div class="stat-icon-small">✅</div>-->
+<!--                  <span class="stat-value">{{ projectTestCaseStats.automated }}</span>-->
+<!--                  <span class="stat-label">Automated</span>-->
+<!--                </div>-->
+
+<!--                <div class="stat-card progress">-->
+<!--                  <div class="stat-icon-small">⚡</div>-->
+<!--                  <span class="stat-value">{{ projectTestCaseStats.inProgress }}</span>-->
+<!--                  <span class="stat-label">In Progress</span>-->
+<!--                </div>-->
+
+<!--                <div class="stat-card ready">-->
+<!--                  <div class="stat-icon-small">🚀</div>-->
+<!--                  <span class="stat-value">{{ projectTestCaseStats.ready }}</span>-->
+<!--                  <span class="stat-label">Ready</span>-->
+<!--                </div>-->
+<!--              </div>-->
+<!--            </div>-->
+
           </div>
+
 
           <ng-template #domainDetails>
             <!-- Domain Details -->
@@ -198,12 +239,20 @@
                   <span class="stat-label">Total Test Cases</span>
                 </div>
                 <div class="stat-item">
-                  <span class="stat-value text-success">{{ domainStats.automatedTestCases }}</span>
-                  <span class="stat-label">Automated</span>
+                  <span class="stat-value text-info">{{ domainStats.readyTestCases }}</span>
+                  <span class="stat-label">Ready to Automate</span>
                 </div>
                 <div class="stat-item">
                   <span class="stat-value text-warning">{{ domainStats.inProgressTestCases }}</span>
                   <span class="stat-label">In Progress</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-value text-success">{{ domainStats.automatedTestCases }}</span>
+                  <span class="stat-label">Automated</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-value text-success">{{ domainStats.completedTestCases }}</span>
+                  <span class="stat-label">Completed</span>
                 </div>
               </div>
             </div>

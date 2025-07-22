@@ -5,7 +5,7 @@
         <div class="card-body">
           <h2 class="card-title">
             <i class="fas fa-project-diagram me-2"></i>
-            Project Management
+            Application Management
           </h2>
           <p class="card-text text-muted">
             Create and manage automation projects for your QA team
@@ -46,14 +46,14 @@
             </div>
 
             <div class="mb-3">
-              <label for="name" class="form-label">Project Name *</label>
+              <label for="name" class="form-label">Application Name *</label>
               <input
                       type="text"
                       class="form-control"
                       id="name"
                       formControlName="name"
                       [class.is-invalid]="projectForm.get('name')?.invalid && projectForm.get('name')?.touched"
-                      placeholder="Enter project name"
+                      placeholder="Enter application name"
               >
               <div class="invalid-feedback" *ngIf="projectForm.get('name')?.invalid && projectForm.get('name')?.touched">
                 Project name is required and must be at least 3 characters long.
@@ -68,7 +68,7 @@
                       rows="4"
                       formControlName="description"
                       [class.is-invalid]="projectForm.get('description')?.invalid && projectForm.get('description')?.touched"
-                      placeholder="Enter project description"
+                      placeholder="Enter application description"
               ></textarea>
               <div class="invalid-feedback" *ngIf="projectForm.get('description')?.invalid && projectForm.get('description')?.touched">
                 Description is required and must be at least 10 characters long.
@@ -122,7 +122,7 @@
           <div class="d-flex justify-content-between align-items-center">
             <h5 class="card-title mb-0">
               <i class="fas fa-folder me-2"></i>
-              Projects ({{ filteredProjects.length }})
+              Applications ({{ filteredProjects.length }})
             </h5>
             <div class="filter-section">
               <select
@@ -203,8 +203,8 @@
           <ng-template #noProjects>
             <div class="text-center py-5">
               <i class="fas fa-folder-open text-muted" style="font-size: 4rem;"></i>
-              <h5 class="mt-3 text-muted">No projects found</h5>
-              <p class="text-muted">{{ selectedDomainFilter ? 'No projects found for selected domain' : 'Create your first project to get started with test case management' }}</p>
+              <h5 class="mt-3 text-muted">No Applications found</h5>
+              <p class="text-muted">{{ selectedDomainFilter ? 'No Applications found for selected domain' : 'Create your first project to get started with test case management' }}</p>
             </div>
           </ng-template>
         </div>

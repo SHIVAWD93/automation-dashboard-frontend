@@ -61,14 +61,14 @@
             </div>
 
             <div class="mb-3">
-              <label for="projectId" class="form-label">Project</label>
+              <label for="projectId" class="form-label">Application</label>
               <select
                       class="form-select"
                       id="projectId"
                       formControlName="projectId"
                       [class.is-invalid]="testCaseForm.get('projectId')?.invalid && testCaseForm.get('projectId')?.touched"
               >
-                <option value="">Select Project</option>
+                <option value="">Select Application</option>
                 <option *ngFor="let project of projects" [value]="project.id">
                   {{ project.name }}
                 </option>
@@ -184,7 +184,7 @@
                       [(ngModel)]="selectedProject"
                       (change)="onProjectFilterChange()"
               >
-                <option [ngValue]="null">All Projects</option>
+                <option [ngValue]="null">All Applications</option>
                 <option *ngFor="let project of projects" [ngValue]="project">
                   {{ project.name }}
                 </option>
