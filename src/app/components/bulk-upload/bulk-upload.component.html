@@ -34,7 +34,7 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="projectId" class="form-label">Select Project *</label>
+                        <label for="projectId" class="form-label">Select Application *</label>
                         <select
                                 class="form-control"
                                 id="projectId"
@@ -42,7 +42,7 @@
                                 [class.is-invalid]="uploadForm.get('projectId')?.invalid && uploadForm.get('projectId')?.touched"
                                 [disabled]="!uploadForm.get('domainId')?.value"
                         >
-                            <option value="">Choose Project</option>
+                            <option value="">Choose Application</option>
                             <option *ngFor="let project of filteredProjects" [value]="project.id">
                                 {{ project.name }}
                             </option>

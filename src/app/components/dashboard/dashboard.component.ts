@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef  } from '@angular/core';
 import { ApiService } from '../../services/api.service';
 import { Project, Domain } from '../../models/project.model';
 import { Chart, registerables } from 'chart.js';
@@ -79,7 +79,7 @@ export class DashboardComponent implements OnInit {
   coverageChart: Chart | null = null;
   statusChart: Chart | null = null;
 
-  constructor(private apiService: ApiService) {}
+  constructor(private apiService: ApiService, private cd: ChangeDetectorRef) {}
 
   ngOnInit(): void {
     this.loadDashboardData();
@@ -198,6 +198,7 @@ export class DashboardComponent implements OnInit {
         this.domainStats.inProgressTestCases = testCases.filter(tc => tc.status === 'In Progress').length;
         this.domainStats.readyTestCases = testCases.filter(tc => tc.status === 'Ready to Automate').length;
         this.domainStats.completedTestCases = testCases.filter(tc => tc.status === 'Completed').length;
+        this.updateStatusChart();
       },
       (error) => {
         console.error('Error loading domain test case stats:', error);
@@ -217,6 +218,7 @@ export class DashboardComponent implements OnInit {
         this.projectTestCaseStats.inProgress = testCases.filter(tc => tc.status === 'In Progress').length;
         this.projectTestCaseStats.ready = testCases.filter(tc => tc.status === 'Ready to Automate').length;
         this.projectTestCaseStats.completed = testCases.filter(tc => tc.status === 'Completed').length;
+        this.updateStatusChart();
       },
       (error) => {
         console.error('Error loading project test case stats:', error);
@@ -233,7 +235,7 @@ export class DashboardComponent implements OnInit {
     }
 
     const total = this.dashboardStats.totalTestCases;
-    const automated = this.dashboardStats.automatedTestCases;
+    const automated = this.dashboardStats.automatedTestCases+this.dashboardStats.completedTestCases;
     const notAutomated = total - automated;
 
     this.coverageChart = new Chart(ctx, {
@@ -265,6 +267,7 @@ export class DashboardComponent implements OnInit {
         }
       }
     });
+            this.cd.markForCheck();
   }
 
   updateStatusChart(): void {
@@ -335,6 +338,8 @@ export class DashboardComponent implements OnInit {
         }
       }
     });
+            this.cd.markForCheck();
+
   }
 
   clearStatusChart(): void {
