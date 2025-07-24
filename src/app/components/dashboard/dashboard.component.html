@@ -3,36 +3,13 @@
     <div class="col-12">
       <div class="card dashboard-header">
         <div class="card-body">
-          <div class="d-flex justify-content-between align-items-center">
-            <div>
-              <h2 class="card-title">
-                <i class="fas fa-chart-pie me-2"></i>
-                Automation Coverage Dashboard
-              </h2>
-              <p class="card-text text-muted mb-0">
-                Track your QA automation progress and Application metrics
-              </p>
-            </div>
-            <div class="text-end">
-              <h5 class="mb-1">Welcome, {{ authService.getCurrentUser()?.firstName || authService.getCurrentUser()?.username }}!</h5>
-              <span class="badge" [class]="authService.isAdmin() ? 'bg-success' : 'bg-info'">
-                <i class="fas" [class.fa-crown]="authService.isAdmin()" [class.fa-eye]="authService.isMaintainer()"></i>
-                {{ authService.isAdmin() ? 'Administrator' : 'Maintainer' }}
-              </span>
-            </div>
-          </div>
-          
-          <!-- Role-specific welcome message -->
-          <div class="mt-3">
-            <div *appRoleAccess="'write'" class="alert alert-success" role="alert">
-              <i class="fas fa-crown me-2"></i>
-              <strong>Administrator Access:</strong> You have full access to manage testers, projects, test cases, and view all analytics.
-            </div>
-            <div *ngIf="authService.isMaintainer()" class="alert alert-info" role="alert">
-              <i class="fas fa-eye me-2"></i>
-              <strong>Maintainer Access:</strong> You have read-only access to view dashboard analytics and Jenkins results.
-            </div>
-          </div>
+          <h2 class="card-title">
+            <i class="fas fa-chart-pie me-2"></i>
+            Automation Coverage Dashboard
+          </h2>
+          <p class="card-text text-muted">
+            Track your QA automation progress and Application metrics
+          </p>
         </div>
       </div>
     </div>
@@ -280,63 +257,6 @@
               </div>
             </div>
           </ng-template>
-        </div>
-      </div>
-    </div>
-  </div>
-  
-  <!-- Role-based Action Buttons -->
-  <div class="row mt-4">
-    <div class="col-12">
-      <div class="card">
-        <div class="card-body">
-          <h5 class="card-title">
-            <i class="fas fa-tools me-2"></i>
-            Quick Actions
-          </h5>
-          <div class="row">
-            <!-- Admin-only actions -->
-            <div class="col-md-8" *appRoleAccess="'write'">
-              <div class="d-flex flex-wrap gap-2">
-                <button class="btn btn-primary" routerLink="/testers">
-                  <i class="fas fa-user-plus me-2"></i>
-                  Manage Testers
-                </button>
-                <button class="btn btn-success" routerLink="/projects">
-                  <i class="fas fa-plus-circle me-2"></i>
-                  Add Application
-                </button>
-                <button class="btn btn-info" routerLink="/test-cases">
-                  <i class="fas fa-tasks me-2"></i>
-                  Manage Test Cases
-                </button>
-                <button class="btn btn-warning" routerLink="/bulk-upload">
-                  <i class="fas fa-upload me-2"></i>
-                  Bulk Upload
-                </button>
-              </div>
-            </div>
-            
-            <!-- Actions available to all roles -->
-            <div class="col-md-4">
-              <div class="d-flex flex-wrap gap-2 justify-content-end">
-                <button class="btn btn-outline-primary" routerLink="/jenkins-results">
-                  <i class="fab fa-jenkins me-2"></i>
-                  View Jenkins Results
-                </button>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Maintainer-specific message -->
-          <div *ngIf="authService.isMaintainer()" class="mt-3">
-            <div class="alert alert-light d-flex align-items-center">
-              <i class="fas fa-info-circle text-info me-2"></i>
-              <small class="text-muted">
-                Contact your administrator to request access to additional features like tester management and test case creation.
-              </small>
-            </div>
-          </div>
         </div>
       </div>
     </div>
