@@ -8,6 +8,7 @@ import { TestCase } from '../models/test-case.model';
 import { Tester } from '../models/tester.model';
 import { JenkinsResult, JenkinsTestCase, JenkinsStatistics, JenkinsConnectionTest } from '../models/jenkins.model';
 import { environment } from '../../environment/environment';
+import { AuthService } from './auth.service';
 
 @Injectable({
   providedIn: 'root'
@@ -21,7 +22,16 @@ private baseUrl = environment.apiUrl;
     })
   };
 
-  constructor(private http: HttpClient) { }
+  constructor(
+    private http: HttpClient,
+    private authService: AuthService
+  ) { }
+
+  private getAuthHttpOptions() {
+    return {
+      headers: this.authService.getAuthHeaders()
+    };
+  }
 
   // Domain API methods
   getDomains(): Observable<Domain[]> {
