@@ -2,6 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ApiService } from '../../services/api.service';
 import { Tester } from '../../models/tester.model';
+import { AppService } from '../../services/app.service';
+import { environment } from '../../../environment/environment';
 
 @Component({
   selector: 'app-tester-registration',
@@ -14,10 +16,12 @@ export class TesterRegistrationComponent implements OnInit {
   loading = false;
   selectedFile: File | null = null;
   previewUrl: string | ArrayBuffer | null = null;
+  showRegistration:boolean = false;
 
   constructor(
     private fb: FormBuilder,
-    private apiService: ApiService
+    private apiService: ApiService,
+    private appService:AppService
   ) {
     this.testerForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(2)]],
@@ -25,6 +29,7 @@ export class TesterRegistrationComponent implements OnInit {
       gender: ['', Validators.required],
       experience: [0, [Validators.required, Validators.min(0)]] // Added experience field
     });
+ this.showRegistration = this.appService.userPermission?.permission === environment.appWrite;
   }
 
   ngOnInit(): void {

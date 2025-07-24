@@ -2,6 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ApiService } from '../../services/api.service';
 import { Project, Domain } from '../../models/project.model';
+import { AppService } from '../../services/app.service';
+import { environment } from '../../../environment/environment';
 
 @Component({
   selector: 'app-project-management',
@@ -16,10 +18,12 @@ export class ProjectManagementComponent implements OnInit {
   loading = false;
   editingProject: Project | null = null;
   selectedDomainFilter: string = '';
+  showRegistration:boolean = false;
 
   constructor(
     private fb: FormBuilder,
-    private apiService: ApiService
+    private apiService: ApiService,
+    private appService: AppService
   ) {
     this.projectForm = this.fb.group({
       domainId: ['', Validators.required],
@@ -27,6 +31,7 @@ export class ProjectManagementComponent implements OnInit {
       description: ['', [Validators.required, Validators.minLength(10)]],
       status: ['Active', Validators.required]
     });
+    this.showRegistration = this.appService.userPermission?.permission === environment.appWrite;
   }
 
   ngOnInit(): void {
