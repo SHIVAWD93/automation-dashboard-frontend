@@ -1,35 +1,48 @@
 <div class="app-container">
-  <nav class="navbar navbar-expand-lg navbar-dark nav-header">
-    <div class="flex" style="width:100%; display:flex">
-      <a class="navbar-brand" href="#" >
-        <img src=".\assets\winsupply_logo.jpg" style="border-radius: 50%;">
+  <!-- Navigation (shown only when authenticated) -->
+  <nav class="navbar navbar-expand-lg navbar-dark nav-header" *ngIf="isAuthenticated">
+    <div class="container-fluid">
+      <a class="navbar-brand" routerLink="/dashboard">
+        <img src="./assets/winsupply_logo.jpg" style="border-radius: 50%;">
         QA Automation Coverage Dashboard
       </a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      
+      <button 
+        class="navbar-toggler" 
+        type="button" 
+        (click)="toggleMobileMenu()"
+        [attr.aria-expanded]="showMobileMenu"
+      >
         <span class="navbar-toggler-icon"></span>
       </button>
-      <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav ms-auto">
+      
+      <div class="collapse navbar-collapse" [class.show]="showMobileMenu" id="navbarNav">
+        <!-- Main Navigation -->
+        <ul class="navbar-nav me-auto">
           <li class="nav-item">
             <a class="nav-link" routerLink="/dashboard" routerLinkActive="active">
               <i class="fas fa-tachometer-alt me-1"></i>Dashboard
             </a>
           </li>
-          <li class="nav-item">
+          
+          <!-- Admin-only navigation items -->
+          <li class="nav-item" *ngIf="hasWriteAccess()">
             <a class="nav-link" routerLink="/testers" routerLinkActive="active">
               <i class="fas fa-users me-1"></i>Testers
             </a>
           </li>
-          <li class="nav-item">
+          <li class="nav-item" *ngIf="hasWriteAccess()">
             <a class="nav-link" routerLink="/projects" routerLinkActive="active">
               <i class="fas fa-project-diagram me-1"></i>Applications
             </a>
           </li>
-          <li class="nav-item">
+          <li class="nav-item" *ngIf="hasWriteAccess()">
             <a class="nav-link" routerLink="/test-cases" routerLinkActive="active">
               <i class="fas fa-tasks me-1"></i>Test Cases
             </a>
           </li>
+          
+          <!-- Available to all authenticated users -->
           <li class="nav-item">
             <a class="nav-link" routerLink="/jenkins-results" routerLinkActive="active">
               <i class="fab fa-jenkins me-1"></i>
@@ -37,13 +50,52 @@
             </a>
           </li>
         </ul>
+
+        <!-- User Info and Logout -->
+        <ul class="navbar-nav">
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle user-menu" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="fas fa-user-circle me-2"></i>
+              <span class="user-name">{{ getUserDisplayName() }}</span>
+              <span class="badge ms-2" [class]="getRoleBadgeClass()">
+                {{ getRoleDisplayName() }}
+              </span>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li>
+                <span class="dropdown-item-text">
+                  <div class="user-info">
+                    <div class="fw-bold">{{ getUserDisplayName() }}</div>
+                    <div class="text-muted small">{{ currentUser?.email }}</div>
+                    <div class="mt-1">
+                      <span class="badge" [class]="getRoleBadgeClass()">
+                        <i class="fas" [class.fa-crown]="isAdmin()" [class.fa-eye]="isMaintainer()"></i>
+                        {{ getRoleDisplayName() }}
+                      </span>
+                    </div>
+                  </div>
+                </span>
+              </li>
+              <li><hr class="dropdown-divider"></li>
+              <li>
+                <button class="dropdown-item logout-btn" (click)="logout()">
+                  <i class="fas fa-sign-out-alt me-2"></i>
+                  Sign Out
+                </button>
+              </li>
+            </ul>
+          </li>
+        </ul>
       </div>
     </div>
   </nav>
 
-
-  <main class="main-content">
-    <div class="mt-4">
+  <!-- Main Content -->
+  <main class="main-content" [class.authenticated]="isAuthenticated">
+    <div class="mt-4" *ngIf="isAuthenticated">
+      <router-outlet></router-outlet>
+    </div>
+    <div *ngIf="!isAuthenticated">
       <router-outlet></router-outlet>
     </div>
   </main>
