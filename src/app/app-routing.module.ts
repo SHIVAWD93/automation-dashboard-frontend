@@ -6,50 +6,18 @@ import { ProjectManagementComponent } from './components/project-management/proj
 import { TestCaseTrackingComponent } from './components/test-case-tracking/test-case-tracking.component';
 import { BulkUploadComponent } from './components/bulk-upload/bulk-upload.component';
 import { JenkinsResultsComponent } from './components/jenkins-results/jenkins-results.component';
-import { LoginComponent } from './components/auth/login.component';
-import { UnauthorizedComponent } from './components/auth/unauthorized.component';
-import { AuthGuard } from './guards/auth.guard';
-import { UserRole } from './models/user.model';
+
 
 const routes: Routes = [
   { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
-  { path: 'login', component: LoginComponent },
-  { path: 'unauthorized', component: UnauthorizedComponent },
-  { 
-    path: 'dashboard', 
-    component: DashboardComponent, 
-    canActivate: [AuthGuard] 
-  },
-  { 
-    path: 'testers', 
-    component: TesterRegistrationComponent, 
-    canActivate: [AuthGuard],
-    data: { roles: [UserRole.ADMIN] }
-  },
-  { 
-    path: 'projects', 
-    component: ProjectManagementComponent, 
-    canActivate: [AuthGuard],
-    data: { roles: [UserRole.ADMIN] }
-  },
-  { 
-    path: 'test-cases', 
-    component: TestCaseTrackingComponent, 
-    canActivate: [AuthGuard],
-    data: { roles: [UserRole.ADMIN] }
-  },
-  { 
-    path: 'bulk-upload', 
-    component: BulkUploadComponent, 
-    canActivate: [AuthGuard],
-    data: { roles: [UserRole.ADMIN] }
-  },
-  { 
-    path: 'jenkins-results', 
-    component: JenkinsResultsComponent, 
-    canActivate: [AuthGuard] 
-  },
-  { path: '**', redirectTo: '/login' }
+  { path: 'dashboard', component: DashboardComponent },
+  { path: 'testers', component: TesterRegistrationComponent },
+  { path: 'projects', component: ProjectManagementComponent },
+  { path: 'test-cases', component: TestCaseTrackingComponent },
+  {path: 'bulk-upload', component: BulkUploadComponent},
+  { path: 'jenkins-results', component: JenkinsResultsComponent },
+  { path: '**', redirectTo: '/dashboard' }
+
 ];
 
 @NgModule({

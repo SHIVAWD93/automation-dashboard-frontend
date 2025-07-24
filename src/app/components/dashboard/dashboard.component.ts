@@ -1,8 +1,6 @@
 import { Component, OnInit, ChangeDetectorRef  } from '@angular/core';
 import { ApiService } from '../../services/api.service';
-import { AuthService } from '../../services/auth.service';
 import { Project, Domain } from '../../models/project.model';
-import { User, UserRole } from '../../models/user.model';
 import { Chart, registerables } from 'chart.js';
 
 Chart.register(...registerables);
@@ -41,7 +39,6 @@ interface DomainStats {
   styleUrls: ['./dashboard.component.css']
 })
 export class DashboardComponent implements OnInit {
-  currentUser: User | null = null;
   dashboardStats: DashboardStats = {
     totalDomains: 0,
     totalProjects: 0,
@@ -82,14 +79,9 @@ export class DashboardComponent implements OnInit {
   coverageChart: Chart | null = null;
   statusChart: Chart | null = null;
 
-  constructor(
-    private apiService: ApiService, 
-    private cd: ChangeDetectorRef,
-    public authService: AuthService
-  ) {}
+  constructor(private apiService: ApiService, private cd: ChangeDetectorRef) {}
 
   ngOnInit(): void {
-    this.currentUser = this.authService.getCurrentUser();
     this.loadDashboardData();
   }
 
