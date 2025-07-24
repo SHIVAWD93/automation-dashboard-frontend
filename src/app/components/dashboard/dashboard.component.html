@@ -142,7 +142,7 @@
               <h6 class="text-primary">Project Information</h6>
               <p><strong>Name:</strong> {{ selectedProject.name }}</p>
               <p><strong>Description:</strong> {{ selectedProject.description }}</p>
-              <p><strong>Domain:</strong> {{ selectedProject.domain?.name || 'N/A' }}</p>
+              <p><strong>Domain:</strong> {{ selectedProject.domain.name || 'N/A' }}</p>
               <p><strong>Status:</strong>
                 <span class="badge" [class]="getStatusColor(selectedProject.status)">
                   {{ selectedProject.status }}

@@ -76,6 +76,22 @@
             </div>
 
             <div class="mb-3">
+              <label for="experience" class="form-label">Experience (years)</label>
+              <input 
+                type="number" 
+                class="form-control" 
+                id="experience" 
+                formControlName="experience"
+                min="0"
+                step="1"
+                [class.is-invalid]="testerForm.get('experience')?.invalid && testerForm.get('experience')?.touched"
+              >
+              <div class="invalid-feedback" *ngIf="testerForm.get('experience')?.invalid && testerForm.get('experience')?.touched">
+                Please enter a valid experience value (0 or greater).
+              </div>
+            </div>
+
+            <div class="mb-3">
               <label for="profileImage" class="form-label">Profile Image</label>
               <input 
                 type="file" 
@@ -140,6 +156,10 @@
                   <p class="card-text text-muted small">
                     <i class="fas fa-venus-mars me-1"></i>
                     {{ tester.gender }}
+                  </p>
+                  <p class="card-text text-muted small">
+                    <i class="fas fa-briefcase me-1"></i>
+                    {{ tester.experience }} year(s) experience
                   </p>
                   <p class="card-text text-muted small">
                     <i class="fas fa-calendar-alt me-1"></i>

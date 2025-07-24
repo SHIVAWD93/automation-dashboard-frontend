@@ -1,8 +1,7 @@
 import { Component, OnInit, Input, Output, EventEmitter, ViewChild, ElementRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ApiService } from '../../services/api.service';
-import { Project } from '../../models/project.model';
-import { Domain } from '../../models/domain.model';
+import { Project, Domain } from '../../models/project.model';
 import { Tester } from '../../models/tester.model';
 import { TestCase } from '../../models/test-case.model';
 import * as XLSX from 'xlsx';
