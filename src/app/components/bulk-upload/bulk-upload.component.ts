@@ -1,8 +1,8 @@
 import { Component, OnInit, Input, Output, EventEmitter, ViewChild, ElementRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { lastValueFrom } from 'rxjs';
 import { ApiService } from '../../services/api.service';
-import { Project } from '../../models/project.model';
-import { Domain } from '../../models/domain.model';
+import { Project, Domain } from '../../models/project.model';
 import { Tester } from '../../models/tester.model';
 import { TestCase } from '../../models/test-case.model';
 import * as XLSX from 'xlsx';
@@ -79,7 +79,7 @@ export class BulkUploadComponent implements OnInit {
       (data: Domain[]) => {
         this.domains = data;
       },
-      (error) => {
+      (error: any) => {
         console.error('Error loading domains:', error);
       }
     );
@@ -103,7 +103,7 @@ export class BulkUploadComponent implements OnInit {
       (data: Project[]) => {
         this.filteredProjects = data.filter(project => project.status === 'Active');
       },
-      (error) => {
+      (error: any) => {
         console.error('Error loading projects by domain:', error);
         this.filteredProjects = [];
       }
@@ -361,7 +361,7 @@ export class BulkUploadComponent implements OnInit {
     try {
       // Check if the method exists in ApiService
       if (this.apiService.getTestCasesByProject) {
-        const projectTestCases = await this.apiService.getTestCasesByProject(projectId).toPromise();
+        const projectTestCases = await lastValueFrom(this.apiService.getTestCasesByProject(projectId));
 
         // Add null/undefined check
         if (!projectTestCases) {
