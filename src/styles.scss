@@ -142,5 +142,8 @@ body {
 
 .p-dropdown {
   min-height: 36px;
-  min-width: 200px !important;
+  width: 100% !important;
+}
+.p-dropdown .p-dropdown-items-wrapper ul{
+  padding: 2px;
 }

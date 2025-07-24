@@ -1,27 +1,53 @@
-import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
-import { DashboardComponent } from './components/dashboard/dashboard.component';
-import { TesterRegistrationComponent } from './components/tester-registration/tester-registration.component';
-import { ProjectManagementComponent } from './components/project-management/project-management.component';
-import { TestCaseTrackingComponent } from './components/test-case-tracking/test-case-tracking.component';
-import { BulkUploadComponent } from './components/bulk-upload/bulk-upload.component';
-import { JenkinsResultsComponent } from './components/jenkins-results/jenkins-results.component';
-
+import { NgModule } from "@angular/core";
+import { RouterModule, Routes } from "@angular/router";
+import { DashboardComponent } from "./components/dashboard/dashboard.component";
+import { TesterRegistrationComponent } from "./components/tester-registration/tester-registration.component";
+import { ProjectManagementComponent } from "./components/project-management/project-management.component";
+import { TestCaseTrackingComponent } from "./components/test-case-tracking/test-case-tracking.component";
+import { BulkUploadComponent } from "./components/bulk-upload/bulk-upload.component";
+import { JenkinsResultsComponent } from "./components/jenkins-results/jenkins-results.component";
+import { LoginDashboardComponent } from "./components/login-dashboard/login-dashboard.component";
+import { AuthGuard } from "./auth.guard";
 
 const routes: Routes = [
-  { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
-  { path: 'dashboard', component: DashboardComponent },
-  { path: 'testers', component: TesterRegistrationComponent },
-  { path: 'projects', component: ProjectManagementComponent },
-  { path: 'test-cases', component: TestCaseTrackingComponent },
-  {path: 'bulk-upload', component: BulkUploadComponent},
-  { path: 'jenkins-results', component: JenkinsResultsComponent },
-  { path: '**', redirectTo: '/dashboard' }
+  { path: "", redirectTo: "/login", pathMatch: "full" },
+  {
+    path: "dashboard",
+    component: DashboardComponent,
+    canActivate: [AuthGuard],
+  },
+  {
+    path: "testers",
+    component: TesterRegistrationComponent,
+    canActivate: [AuthGuard],
+  },
+  {
+    path: "projects",
+    component: ProjectManagementComponent,
+    canActivate: [AuthGuard],
+  },
+  {
+    path: "test-cases",
+    component: TestCaseTrackingComponent,
+    canActivate: [AuthGuard],
+  },
+  {
+    path: "bulk-upload",
+    component: BulkUploadComponent,
+    canActivate: [AuthGuard],
+  },
+  {
+    path: "jenkins-results",
+    component: JenkinsResultsComponent,
+    canActivate: [AuthGuard],
+  },
+  { path: "login", component: LoginDashboardComponent },
 
+  { path: "**", redirectTo: "/login" },
 ];
 
 @NgModule({
   imports: [RouterModule.forRoot(routes)],
-  exports: [RouterModule]
+  exports: [RouterModule],
 })
-export class AppRoutingModule { }
+export class AppRoutingModule {}
