@@ -22,6 +22,7 @@ export class TestCaseTrackingComponent implements OnInit {
   filteredTestCases: TestCase[] = [];
   searchTerm = '';
   showPopup: boolean = false;
+  showDialog:boolean = false;
   
   // Sorting properties
   currentSort = { column: '', direction: 'asc' };
@@ -202,6 +203,7 @@ export class TestCaseTrackingComponent implements OnInit {
       status: testCase.status,
       priority: testCase.priority
     });
+    this.showDialog = true;
   }
 
   deleteTestCase(id: number): void {
@@ -224,6 +226,7 @@ export class TestCaseTrackingComponent implements OnInit {
       priority: 'Medium'
     });
     this.editingTestCase = null;
+    this.showDialog = false;
   }
 
   getStatusColor(status: string): string {

@@ -1,14 +1,14 @@
-import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { ApiService } from '../../services/api.service';
-import { Project, Domain } from '../../models/project.model';
-import { AppService } from '../../services/app.service';
-import { environment } from '../../../environment/environment';
+import { Component, OnInit } from "@angular/core";
+import { FormBuilder, FormGroup, Validators } from "@angular/forms";
+import { ApiService } from "../../services/api.service";
+import { Project, Domain } from "../../models/project.model";
+import { AppService } from "../../services/app.service";
+import { environment } from "../../../environment/environment";
 
 @Component({
-  selector: 'app-project-management',
-  templateUrl: './project-management.component.html',
-  styleUrls: ['./project-management.component.css']
+  selector: "app-project-management",
+  templateUrl: "./project-management.component.html",
+  styleUrls: ["./project-management.component.css"],
 })
 export class ProjectManagementComponent implements OnInit {
   projectForm: FormGroup;
@@ -17,8 +17,9 @@ export class ProjectManagementComponent implements OnInit {
   filteredProjects: Project[] = [];
   loading = false;
   editingProject: Project | null = null;
-  selectedDomainFilter: string = '';
-  showRegistration:boolean = false;
+  selectedDomainFilter: string = "";
+  showRegistration: boolean = false;
+  showDialog: boolean = false;
 
   constructor(
     private fb: FormBuilder,
@@ -26,12 +27,13 @@ export class ProjectManagementComponent implements OnInit {
     private appService: AppService
   ) {
     this.projectForm = this.fb.group({
-      domainId: ['', Validators.required],
-      name: ['', [Validators.required, Validators.minLength(3)]],
-      description: ['', [Validators.required, Validators.minLength(10)]],
-      status: ['Active', Validators.required]
+      domainId: ["", Validators.required],
+      name: ["", [Validators.required, Validators.minLength(3)]],
+      description: ["", [Validators.required, Validators.minLength(10)]],
+      status: ["Active", Validators.required],
     });
-    this.showRegistration = this.appService.userPermission?.permission === environment.appWrite;
+    this.showRegistration =
+      this.appService.userPermission?.permission === environment.appWrite;
   }
 
   ngOnInit(): void {
@@ -45,7 +47,7 @@ export class ProjectManagementComponent implements OnInit {
         this.domains = data;
       },
       (error) => {
-        console.error('Error loading domains:', error);
+        console.error("Error loading domains:", error);
       }
     );
   }
@@ -61,23 +63,27 @@ export class ProjectManagementComponent implements OnInit {
         description: formData.description,
         status: formData.status,
         domain: {
-          id: formData.domainId
-        }
+          id: formData.domainId,
+        },
       };
 
       if (this.editingProject) {
-        this.apiService.updateProject(this.editingProject.id, projectData).subscribe(
-          (response) => {
-            this.loadProjects();
-            this.resetForm();
-            this.loading = false;
-          },
-          (error) => {
-            console.error('Error updating project:', error);
-            alert('Error updating project: ' + (error.error || error.message));
-            this.loading = false;
-          }
-        );
+        this.apiService
+          .updateProject(this.editingProject.id, projectData)
+          .subscribe(
+            (response) => {
+              this.loadProjects();
+              this.resetForm();
+              this.loading = false;
+            },
+            (error) => {
+              console.error("Error updating project:", error);
+              alert(
+                "Error updating project: " + (error.error || error.message)
+              );
+              this.loading = false;
+            }
+          );
       } else {
         this.apiService.createProject(projectData).subscribe(
           (response) => {
@@ -86,8 +92,8 @@ export class ProjectManagementComponent implements OnInit {
             this.loading = false;
           },
           (error) => {
-            console.error('Error creating project:', error);
-            alert('Error creating project: ' + (error.error || error.message));
+            console.error("Error creating project:", error);
+            alert("Error creating project: " + (error.error || error.message));
             this.loading = false;
           }
         );
@@ -102,7 +108,7 @@ export class ProjectManagementComponent implements OnInit {
         this.applyDomainFilter();
       },
       (error) => {
-        console.error('Error loading projects:', error);
+        console.error("Error loading projects:", error);
       }
     );
   }
@@ -113,8 +119,10 @@ export class ProjectManagementComponent implements OnInit {
 
   applyDomainFilter(): void {
     if (this.selectedDomainFilter) {
-      this.filteredProjects = this.projects.filter(project =>
-        project.domain && project.domain.id.toString() === this.selectedDomainFilter
+      this.filteredProjects = this.projects.filter(
+        (project) =>
+          project.domain &&
+          project.domain.id.toString() === this.selectedDomainFilter
       );
     } else {
       this.filteredProjects = [...this.projects];
@@ -124,22 +132,27 @@ export class ProjectManagementComponent implements OnInit {
   editProject(project: Project): void {
     this.editingProject = project;
     this.projectForm.patchValue({
-      domainId: project.domain ? project.domain.id : '',
+      domainId: project.domain ? project.domain.id : "",
       name: project.name,
       description: project.description,
-      status: project.status
+      status: project.status,
     });
+    this.showDialog = true;
   }
 
   deleteProject(id: number): void {
-    if (confirm('Are you sure you want to delete this project? This will also delete all associated test cases.')) {
+    if (
+      confirm(
+        "Are you sure you want to delete this project? This will also delete all associated test cases."
+      )
+    ) {
       this.apiService.deleteProject(id).subscribe(
         () => {
           this.loadProjects();
         },
         (error) => {
-          console.error('Error deleting project:', error);
-          alert('Error deleting project: ' + (error.error || error.message));
+          console.error("Error deleting project:", error);
+          alert("Error deleting project: " + (error.error || error.message));
         }
       );
     }
@@ -147,25 +160,26 @@ export class ProjectManagementComponent implements OnInit {
 
   resetForm(): void {
     this.projectForm.reset();
-    this.projectForm.patchValue({ status: 'Active' });
+    this.projectForm.patchValue({ status: "Active" });
     this.editingProject = null;
+    this.showDialog = false;
   }
 
   getStatusColor(status: string): string {
     switch (status) {
-      case 'Active':
-        return 'bg-success';
-      case 'Inactive':
-        return 'bg-danger';
-      case 'Completed':
-        return 'bg-primary';
+      case "Active":
+        return "bg-success";
+      case "Inactive":
+        return "bg-danger";
+      case "Completed":
+        return "bg-primary";
       default:
-        return 'bg-secondary';
+        return "bg-secondary";
     }
   }
 
   getDomainName(domainId: number): string {
-    const domain = this.domains.find(d => d.id === domainId);
-    return domain ? domain.name : 'Unknown Domain';
+    const domain = this.domains.find((d) => d.id === domainId);
+    return domain ? domain.name : "Unknown Domain";
   }
 }

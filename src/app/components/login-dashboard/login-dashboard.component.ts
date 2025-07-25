@@ -49,6 +49,9 @@ export class LoginDashboardComponent {
         },
         error: (err: any) => {
           this.errorMessage = "User does not exist.";
+          setTimeout(() => {
+            this.errorMessage = "";
+          }, 5000);
           this.appService.authenticated.next(false);
           this.authenticated.emit(false);
         },
@@ -70,6 +73,9 @@ export class LoginDashboardComponent {
       },
       error: (err: any) => {
         this.errorMessage = "Unable to register";
+        setTimeout(() => {
+          this.errorMessage = "";
+        }, 5000);
         console.error("Registration failed", err);
       },
     });
