@@ -1,6 +1,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@import "primeicons/primeicons.css";
 
 /* Global styles */
 
@@ -146,4 +147,8 @@ body {
 }
 .p-dropdown .p-dropdown-items-wrapper ul{
   padding: 2px;
+}
+
+.nav-bar button{
+  height: 20px;
 }

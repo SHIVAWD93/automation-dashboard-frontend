@@ -4,3 +4,4 @@ export const environment = {
   appRead:'read',
   appWrite:'write'
 };
+

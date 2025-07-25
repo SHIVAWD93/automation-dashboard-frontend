@@ -17,6 +17,7 @@ export class TesterRegistrationComponent implements OnInit {
   selectedFile: File | null = null;
   previewUrl: string | ArrayBuffer | null = null;
   showRegistration:boolean = false;
+  showDialog:boolean = false;
 
   constructor(
     private fb: FormBuilder,

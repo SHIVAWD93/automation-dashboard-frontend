@@ -15,4 +15,7 @@ export class AppComponent {
       this.appService.isAuthorised = value;
     });
   }
+  logout() {
+    window.location.reload();
+  }
 }

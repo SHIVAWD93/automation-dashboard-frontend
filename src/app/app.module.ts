@@ -16,6 +16,7 @@ import { JenkinsResultsComponent } from "./components/jenkins-results/jenkins-re
 import { DropdownModule } from "primeng/dropdown";
 import { ButtonModule } from "primeng/button";
 import { CardModule } from "primeng/card";
+import { DialogModule } from "primeng/dialog";
 
 import { ApiService } from "./services/api.service";
 
@@ -55,6 +56,7 @@ export class FilterPipe implements PipeTransform {
     DropdownModule,
     ButtonModule,
     CardModule,
+    DialogModule,
   ],
   providers: [ApiService],
   bootstrap: [AppComponent],
