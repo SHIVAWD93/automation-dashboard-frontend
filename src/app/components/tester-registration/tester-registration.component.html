@@ -33,9 +33,11 @@
               <div class="card tester-card">
                 <div class="card-body text-center">
                   <div class="profile-image-container">
-                    <img [src]="tester.profileImageUrl || '/assets/default-avatar.svg'" alt="{{ tester.name }}"
-                      class="profile-image" />
+                    <img
+                      [src]="tester.profileImageUrl ? 'data:image/png;base64,' + tester.profileImageUrl : '/assets/default-avatar.svg'"
+                      alt="{{ tester.name }}" class="profile-image" />
                   </div>
+
                   <h6 class="card-title mt-3">{{ tester.name }}</h6>
                   <span class="badge mb-2" [class]="getRoleColor(tester.role)">
                     {{ tester.role }}
