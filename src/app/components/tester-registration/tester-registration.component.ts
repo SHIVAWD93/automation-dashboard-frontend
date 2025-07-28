@@ -1,36 +1,37 @@
-import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { ApiService } from '../../services/api.service';
-import { Tester } from '../../models/tester.model';
-import { AppService } from '../../services/app.service';
-import { environment } from '../../../environment/environment';
+import { Component, OnInit } from "@angular/core";
+import { FormBuilder, FormGroup, Validators } from "@angular/forms";
+import { ApiService } from "../../services/api.service";
+import { Tester } from "../../models/tester.model";
+import { AppService } from "../../services/app.service";
+import { environment } from "../../../environment/environment";
 
 @Component({
-  selector: 'app-tester-registration',
-  templateUrl: './tester-registration.component.html',
-  styleUrls: ['./tester-registration.component.css']
+  selector: "app-tester-registration",
+  templateUrl: "./tester-registration.component.html",
+  styleUrls: ["./tester-registration.component.css"],
 })
 export class TesterRegistrationComponent implements OnInit {
   testerForm: FormGroup;
   testers: Tester[] = [];
   loading = false;
-  selectedFile: File | null = null;
+  selectedFile: any = null;
   previewUrl: string | ArrayBuffer | null = null;
-  showRegistration:boolean = false;
-  showDialog:boolean = false;
+  showRegistration: boolean = false;
+  showDialog: boolean = false;
 
   constructor(
     private fb: FormBuilder,
     private apiService: ApiService,
-    private appService:AppService
+    private appService: AppService
   ) {
     this.testerForm = this.fb.group({
-      name: ['', [Validators.required, Validators.minLength(2)]],
-      role: ['', Validators.required],
-      gender: ['', Validators.required],
-      experience: [0, [Validators.required, Validators.min(0)]] // Added experience field
+      name: ["", [Validators.required, Validators.minLength(2)]],
+      role: ["", Validators.required],
+      gender: ["", Validators.required],
+      experience: [0, [Validators.required, Validators.min(0)]], // Added experience field
     });
- this.showRegistration = this.appService.userPermission?.permission === environment.appWrite;
+    this.showRegistration =
+      this.appService.userPermission?.permission === environment.appWrite;
   }
 
   ngOnInit(): void {
@@ -41,11 +42,10 @@ export class TesterRegistrationComponent implements OnInit {
     const file = event.target.files[0];
     if (file) {
       this.selectedFile = file;
-
-      // Create preview
       const reader = new FileReader();
       reader.onload = (e: any) => {
-        this.previewUrl = e.target.result;
+        const dataUrl = e.target.result as string;
+        this.previewUrl = dataUrl;
       };
       reader.readAsDataURL(file);
     }
@@ -57,31 +57,31 @@ export class TesterRegistrationComponent implements OnInit {
 
       // Create tester data object
       const testerData: Partial<Tester> = {
-        name: this.testerForm.get('name')?.value,
-        role: this.testerForm.get('role')?.value,
-        gender: this.testerForm.get('gender')?.value,
-        experience: this.testerForm.get('experience')?.value || 0
+        name: this.testerForm.get("name")?.value,
+        role: this.testerForm.get("role")?.value,
+        gender: this.testerForm.get("gender")?.value,
+        experience: this.testerForm.get("experience")?.value || 0,
       };
 
       // If there's a file, create FormData, otherwise send JSON
       if (this.selectedFile) {
         const formData = new FormData();
-        formData.append('name', testerData.name!);
-        formData.append('role', testerData.role!);
-        formData.append('gender', testerData.gender!);
-        formData.append('experience', testerData.experience!.toString());
-        formData.append('profileImage', this.selectedFile);
+        formData.append("name", testerData.name!);
+        formData.append("role", testerData.role!);
+        formData.append("gender", testerData.gender!);
+        formData.append("experience", testerData.experience!.toString());
+        formData.append("profileImage", this.selectedFile);
 
         // You'll need to add this method to your API service for file upload
         this.apiService.createTesterWithImage(formData).subscribe(
           (response) => {
-            console.log('Tester created successfully:', response);
+            console.log("Tester created successfully:", response);
             this.loadTesters();
             this.resetForm();
             this.loading = false;
           },
           (error) => {
-            console.error('Error creating tester:', error);
+            console.error("Error creating tester:", error);
             this.loading = false;
           }
         );
@@ -89,13 +89,13 @@ export class TesterRegistrationComponent implements OnInit {
         // Send as JSON without file
         this.apiService.createTester(testerData as Tester).subscribe(
           (response) => {
-            console.log('Tester created successfully:', response);
+            console.log("Tester created successfully:", response);
             this.loadTesters();
             this.resetForm();
             this.loading = false;
           },
           (error) => {
-            console.error('Error creating tester:', error);
+            console.error("Error creating tester:", error);
             this.loading = false;
           }
         );
@@ -104,14 +104,12 @@ export class TesterRegistrationComponent implements OnInit {
   }
 
   loadTesters(): void {
-    console.log('Loading testers...'); // Debug log
+    console.log("Loading testers..."); // Debug log
     this.apiService.getTesters().subscribe(
       (data: Tester[]) => {
-        console.log('Testers loaded:', data); // Debug log
         this.testers = data;
       },
       (error) => {
-        console.error('Error loading testers:', error);
         // Set empty array on error to prevent undefined issues
         this.testers = [];
       }
@@ -119,14 +117,14 @@ export class TesterRegistrationComponent implements OnInit {
   }
 
   deleteTester(id: number): void {
-    if (confirm('Are you sure you want to delete this tester?')) {
+    if (confirm("Are you sure you want to delete this tester?")) {
       this.apiService.deleteTester(id).subscribe(
         () => {
-          console.log('Tester deleted successfully');
+          console.log("Tester deleted successfully");
           this.loadTesters();
         },
         (error) => {
-          console.error('Error deleting tester:', error);
+          console.error("Error deleting tester:", error);
         }
       );
     }
@@ -140,12 +138,12 @@ export class TesterRegistrationComponent implements OnInit {
 
   getRoleColor(role: string): string {
     switch (role) {
-      case 'Manual Tester':
-        return 'bg-primary';
-      case 'Automation Tester':
-        return 'bg-success';
+      case "Manual Tester":
+        return "bg-primary";
+      case "Automation Tester":
+        return "bg-success";
       default:
-        return 'bg-secondary';
+        return "bg-secondary";
     }
   }
 }
