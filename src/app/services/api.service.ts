@@ -403,6 +403,18 @@ export class ApiService {
       .pipe(catchError(this.handleError));
   }
 
+  // Jenkins job testers assignment and notes
+  assignTestersToJenkinsResult(resultId: number, automationTesterId: number | null, manualTesterId: number | null): Observable<any> {
+    const body = { automationTesterId, manualTesterId };
+    return this.http.post<any>(`${this.baseUrl}/jenkins/results/${resultId}/testers`, body, this.httpOptions)
+      .pipe(catchError(this.handleError));
+  }
+
+  updateJenkinsJobNotes(resultId: number, notes: { bugsIdentified: string; failureReasons: string }): Observable<any> {
+    return this.http.put<any>(`${this.baseUrl}/jenkins/results/${resultId}/notes`, notes, this.httpOptions)
+      .pipe(catchError(this.handleError));
+  }
+
   /**
    * Enhanced error handler with better user messages
    */
