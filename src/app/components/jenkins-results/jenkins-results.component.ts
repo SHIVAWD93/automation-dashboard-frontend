@@ -670,4 +670,15 @@ export class JenkinsResultsComponent implements OnInit, OnDestroy {
       (error) => console.error('Error saving job notes:', error)
     );
   }
+
+  displayTester(tester: Tester | number | null | undefined): string {
+    if (!tester) {
+      return '';
+    }
+    if (typeof tester === 'number') {
+      const found = this.testers.find(t => t.id === tester);
+      return found ? found.name : tester.toString();
+    }
+    return tester.name;
+  }
 }

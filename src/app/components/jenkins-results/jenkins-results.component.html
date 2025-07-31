@@ -401,7 +401,7 @@
                         <tbody>
                         <tr>
                             <td>
-                                <div *ngIf="selectedJob.automationTester; else autoSel">{{ selectedJob.automationTester?.name || (selectedJob.automationTester as any) }}</div>
+                                <div *ngIf="selectedJob.automationTester; else autoSel">{{ displayTester(selectedJob.automationTester) }}</div>
                                 <ng-template #autoSel>
                                   <select class="form-select form-select-sm" [(ngModel)]="automationTesterSelection[selectedJob.id]">
                                      <option [ngValue]="null">Select</option>
@@ -410,7 +410,7 @@
                                 </ng-template>
                             </td>
                             <td>
-                                <div *ngIf="selectedJob.manualTester; else manualSel">{{ selectedJob.manualTester?.name || (selectedJob.manualTester as any) }}</div>
+                                <div *ngIf="selectedJob.manualTester; else manualSel">{{ displayTester(selectedJob.manualTester) }}</div>
                                 <ng-template #manualSel>
                                   <select class="form-select form-select-sm" [(ngModel)]="manualTesterSelection[selectedJob.id]">
                                      <option [ngValue]="null">Select</option>
