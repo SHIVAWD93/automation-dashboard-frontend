@@ -1,3 +1,5 @@
+import { Tester } from './tester.model';
+
 export interface JenkinsResult {
   id: number;
   jobName: string;
@@ -12,6 +14,10 @@ export interface JenkinsResult {
   createdAt: Date;
   updatedAt: Date;
   testCases?: JenkinsTestCase[];
+  automationTester?: Tester | number;
+  manualTester?: Tester | number;
+  bugsIdentified?: string;
+  failureReasons?: string;
 }
 
 export interface JenkinsTestCase {

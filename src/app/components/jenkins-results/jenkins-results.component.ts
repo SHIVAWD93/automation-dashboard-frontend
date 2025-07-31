@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ApiService } from '../../services/api.service';
 import { JenkinsResult, JenkinsTestCase, JenkinsStatistics } from '../../models/jenkins.model';
 import { Chart, registerables } from 'chart.js';
+import { Tester } from '../../models/tester.model';
 
 Chart.register(...registerables);
 
@@ -65,11 +66,18 @@ export class JenkinsResultsComponent implements OnInit, OnDestroy {
     { value: 'SKIPPED', label: 'Skipped' }
   ];
 
+  testers: Tester[] = [];
+  passPercentageThreshold: number = 0;
+  automationTesterSelection: { [key: number]: number | null } = {};
+  manualTesterSelection: { [key: number]: number | null } = {};
+  jobNotes: string = '';
+
   constructor(private apiService: ApiService) {}
 
   ngOnInit(): void {
     this.loadJenkinsData();
     this.testConnection();
+    this.loadTesters();
   }
 
   ngOnDestroy(): void {
@@ -185,8 +193,23 @@ export class JenkinsResultsComponent implements OnInit, OnDestroy {
     );
   }
 
+  loadTesters(): void {
+    this.apiService.getTesters().subscribe(
+      (data: Tester[]) => this.testers = data,
+      (error) => console.error('Error loading testers:', error)
+    );
+  }
+
+  getPassPercentage(result: JenkinsResult): number {
+    if (!result || !result.totalTests) {
+      return 0;
+    }
+    return Math.round((result.passedTests / result.totalTests) * 100);
+  }
+
   selectJob(job: JenkinsResult): void {
     this.selectedJob = job;
+    this.jobNotes = (job.bugsIdentified || '') as string;
     this.loadJobTestCases(job.id);
   }
 
@@ -300,6 +323,9 @@ export class JenkinsResultsComponent implements OnInit, OnDestroy {
       );
     }
 
+    if (this.passPercentageThreshold) {
+      filtered = filtered.filter(r => this.getPassPercentage(r) >= this.passPercentageThreshold);
+    }
     this.filteredResults = filtered;
   }
 
@@ -604,5 +630,44 @@ export class JenkinsResultsComponent implements OnInit, OnDestroy {
     this.selectedTestCaseStatus = '';
     this.destroyCharts();
     setTimeout(() => this.createOverallChart(), 100);
+  }
+
+  assignTesters(result: JenkinsResult): void {
+    const automationId = this.automationTesterSelection[result.id] ?? null;
+    const manualId = this.manualTesterSelection[result.id] ?? null;
+    if (automationId === null && manualId === null) {
+      return;
+    }
+    this.apiService.assignTestersToJenkinsResult(result.id, automationId, manualId).subscribe(
+      () => {
+        if (automationId) {
+          const tester = this.testers.find(t => t.id === automationId);
+          if (tester) {
+            result.automationTester = tester;
+          }
+        }
+        if (manualId) {
+          const tester = this.testers.find(t => t.id === manualId);
+          if (tester) {
+            result.manualTester = tester;
+          }
+        }
+        // Clear selections
+        this.automationTesterSelection[result.id] = null;
+        this.manualTesterSelection[result.id] = null;
+      },
+      (error) => console.error('Error assigning testers:', error)
+    );
+  }
+
+  saveJobNotes(): void {
+    if (!this.selectedJob) { return; }
+    const notes = { bugsIdentified: this.jobNotes, failureReasons: this.jobNotes };
+    this.apiService.updateJenkinsJobNotes(this.selectedJob.id, notes).subscribe(
+      () => {
+        this.selectedJob!.bugsIdentified = this.jobNotes;
+      },
+      (error) => console.error('Error saving job notes:', error)
+    );
   }
 }
