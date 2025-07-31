@@ -31,6 +31,9 @@ export class ProjectManagementComponent implements OnInit {
       name: ["", [Validators.required, Validators.minLength(3)]],
       description: ["", [Validators.required, Validators.minLength(10)]],
       status: ["Active", Validators.required],
+      // NEW: Jira configuration fields
+      jiraProjectKey: [""],
+      jiraBoardId: ["", [Validators.pattern(/^\d*$/)]] // Only numeric values
     });
     this.showRegistration =
       this.appService.userPermission?.permission === environment.appWrite;
@@ -57,7 +60,7 @@ export class ProjectManagementComponent implements OnInit {
       this.loading = true;
       const formData = this.projectForm.value;
 
-      // Create project data with domain reference
+      // Create project data with domain reference and Jira configuration
       const projectData: any = {
         name: formData.name,
         description: formData.description,
@@ -65,6 +68,9 @@ export class ProjectManagementComponent implements OnInit {
         domain: {
           id: formData.domainId,
         },
+        // NEW: Include Jira configuration fields
+        jiraProjectKey: formData.jiraProjectKey?.trim() || null,
+        jiraBoardId: formData.jiraBoardId?.trim() || null
       };
 
       if (this.editingProject) {
@@ -75,6 +81,7 @@ export class ProjectManagementComponent implements OnInit {
               this.loadProjects();
               this.resetForm();
               this.loading = false;
+              console.log('Project updated successfully:', response);
             },
             (error) => {
               console.error("Error updating project:", error);
@@ -90,6 +97,7 @@ export class ProjectManagementComponent implements OnInit {
             this.loadProjects();
             this.resetForm();
             this.loading = false;
+            console.log('Project created successfully:', response);
           },
           (error) => {
             console.error("Error creating project:", error);
@@ -98,6 +106,11 @@ export class ProjectManagementComponent implements OnInit {
           }
         );
       }
+    } else {
+      // Mark all fields as touched to show validation errors
+      Object.keys(this.projectForm.controls).forEach(key => {
+        this.projectForm.get(key)?.markAsTouched();
+      });
     }
   }
 
@@ -136,6 +149,9 @@ export class ProjectManagementComponent implements OnInit {
       name: project.name,
       description: project.description,
       status: project.status,
+      // NEW: Populate Jira configuration fields
+      jiraProjectKey: project.jiraProjectKey || "",
+      jiraBoardId: project.jiraBoardId || ""
     });
     this.showDialog = true;
   }
@@ -149,6 +165,7 @@ export class ProjectManagementComponent implements OnInit {
       this.apiService.deleteProject(id).subscribe(
         () => {
           this.loadProjects();
+          console.log('Project deleted successfully');
         },
         (error) => {
           console.error("Error deleting project:", error);
@@ -160,7 +177,11 @@ export class ProjectManagementComponent implements OnInit {
 
   resetForm(): void {
     this.projectForm.reset();
-    this.projectForm.patchValue({ status: "Active" });
+    this.projectForm.patchValue({
+      status: "Active",
+      jiraProjectKey: "",
+      jiraBoardId: ""
+    });
     this.editingProject = null;
     this.showDialog = false;
   }
@@ -181,5 +202,33 @@ export class ProjectManagementComponent implements OnInit {
   getDomainName(domainId: number): string {
     const domain = this.domains.find((d) => d.id === domainId);
     return domain ? domain.name : "Unknown Domain";
+  }
+
+  // NEW: Helper methods for Jira configuration
+  hasJiraConfiguration(project: Project): boolean {
+    return !!(project.jiraProjectKey && project.jiraBoardId);
+  }
+
+  getJiraConfigurationDisplay(project: Project): string {
+    if (!this.hasJiraConfiguration(project)) {
+      return "Not configured";
+    }
+    return `${project.jiraProjectKey} | Board: ${project.jiraBoardId}`;
+  }
+
+  // NEW: Validation helper for Jira Board ID
+  onJiraBoardIdInput(event: any): void {
+    // Only allow numeric input
+    const value = event.target.value;
+    const numericValue = value.replace(/[^0-9]/g, '');
+    if (value !== numericValue) {
+      this.projectForm.patchValue({ jiraBoardId: numericValue });
+    }
+  }
+
+  // NEW: Transform Jira Project Key to uppercase
+  onJiraProjectKeyInput(event: any): void {
+    const value = event.target.value.toUpperCase();
+    this.projectForm.patchValue({ jiraProjectKey: value });
   }
 }

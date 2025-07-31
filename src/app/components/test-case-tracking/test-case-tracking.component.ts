@@ -31,7 +31,7 @@ export class TestCaseTrackingComponent implements OnInit {
     { value: 'Ready to Automate', label: 'Ready to Automate', color: 'bg-info' },
     { value: 'Automated', label: 'Automated', color: 'bg-success' },
     { value: 'In Progress', label: 'In Progress', color: 'bg-warning' },
-    { value: 'Completed', label: 'Completed', color: 'bg-primary' }
+    { value: 'Completed', label: 'Failed', color: 'bg-danger' }
   ];
 
   constructor(

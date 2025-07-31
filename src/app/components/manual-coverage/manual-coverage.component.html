@@ -1,0 +1,690 @@
+<!-- manual-coverage.component.html - Enhanced version -->
+<div class="manual-coverage-container">
+    <!-- Header -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card header-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2 class="card-title mb-2">
+                                <i class="fab fa-jira me-2"></i>
+                                Manual Coverage - Jira Integration
+                            </h2>
+                            <p class="card-text text-muted">
+                                Link Jira issues with QTest cases and manage automation readiness
+                            </p>
+                        </div>
+                        <div class="connection-status">
+                            <button class="btn btn-outline-primary" (click)="testConnection()" [disabled]="loading">
+                                <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
+                                <i class="fas fa-plug me-2" *ngIf="!loading"></i>
+                                Test Connection
+                            </button>
+                            <div class="mt-2" *ngIf="connectionStatus">
+                                <span class="badge" [class]="connectionStatus.connected ? 'bg-success' : 'bg-danger'">
+                                    <i class="fas" [class]="connectionStatus.connected ? 'fa-check' : 'fa-times'"></i>
+                                    {{ connectionStatus.message }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <ul class="nav nav-tabs nav-tabs-custom">
+                <li class="nav-item">
+                    <a class="nav-link"
+                       [class.active]="activeTab === 'sprints'"
+                       (click)="setActiveTab('sprints')"
+                       style="cursor: pointer;">
+                        <i class="fas fa-calendar-alt me-2"></i>
+                        Sprints
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link"
+                       [class.active]="activeTab === 'issues'"
+                       (click)="setActiveTab('issues')"
+                       [class.disabled]="!selectedSprint"
+                       style="cursor: pointer;">
+                        <i class="fas fa-tasks me-2"></i>
+                        Issues
+                        <span class="badge bg-primary ms-2" *ngIf="selectedSprint">
+                            {{ jiraIssues.length }}
+                        </span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link"
+                       [class.active]="activeTab === 'statistics'"
+                       (click)="setActiveTab('statistics')"
+                       [class.disabled]="!sprintStatistics"
+                       style="cursor: pointer;">
+                        <i class="fas fa-chart-bar me-2"></i>
+                        Statistics
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="row mt-4">
+        <div class="col-12">
+
+            <!-- Sprints Tab -->
+            <div *ngIf="activeTab === 'sprints'" class="tab-content-card">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-calendar-alt me-2"></i>
+                                Available Sprints
+                            </h5>
+
+                            <!-- NEW: Sprint View Toggle -->
+                            <div class="sprint-controls">
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="sprintView"
+                                           id="activeSprintOnly" [checked]="!showAllSprints"
+                                           (change)="showAllSprints = false; onSprintViewToggle()">
+                                    <label class="form-check-label" for="activeSprintOnly">
+                                        Active Sprint Only
+                                    </label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="sprintView"
+                                           id="allSprints" [checked]="showAllSprints"
+                                           (change)="showAllSprints = true; onSprintViewToggle()">
+                                    <label class="form-check-label" for="allSprints">
+                                        All Sprints
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- NEW: Domain and Project Filters -->
+                        <div class="row mt-3">
+                            <div class="col-md-4">
+                                <label for="domainFilter" class="form-label">Filter by Domain</label>
+                                <select class="form-select form-select-sm" id="domainFilter"
+                                        [(ngModel)]="selectedDomain" (change)="onDomainChange()">
+                                    <option [ngValue]="null">All Domains</option>
+                                    <option *ngFor="let domain of domains" [ngValue]="domain">
+                                        {{ domain.name }}
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="projectFilter" class="form-label">Filter by Project</label>
+                                <select class="form-select form-select-sm" id="projectFilter"
+                                        [(ngModel)]="selectedProjectForSprints" (change)="onProjectChange()"
+                                        [disabled]="!selectedDomain">
+                                    <option [ngValue]="null">All Projects</option>
+                                    <option *ngFor="let project of filteredProjectsForSprints" [ngValue]="project">
+                                        {{ project.name }}
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row" *ngIf="filteredSprints.length > 0; else noSprints">
+                            <div class="col-lg-4 col-md-6 mb-3" *ngFor="let sprint of filteredSprints">
+                                <div class="card sprint-card"
+                                     [class.selected]="selectedSprint?.id === sprint.id"
+                                     (click)="selectSprint(sprint)">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <h6 class="card-title mb-0">{{ sprint.name }}</h6>
+                                            <span class="badge" [class]="getSprintStateColor(sprint.state)">
+                                                {{ sprint.state }}
+                                            </span>
+                                        </div>
+                                        <div class="sprint-details">
+                                            <p class="text-muted mb-1">
+                                                <i class="fas fa-play me-1"></i>
+                                                <small>{{ sprint.startDate | date:'short' }}</small>
+                                            </p>
+                                            <p class="text-muted mb-0">
+                                                <i class="fas fa-stop me-1"></i>
+                                                <small>{{ sprint.endDate | date:'short' }}</small>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <ng-template #noSprints>
+                            <div class="no-data">
+                                <i class="fas fa-calendar-times text-muted"></i>
+                                <h5 class="mt-3 text-muted">No sprints available</h5>
+                                <p class="text-muted">
+                                    Check your Jira connection or ensure sprints exist in your configured board.
+                                </p>
+                            </div>
+                        </ng-template>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Issues Tab -->
+            <div *ngIf="activeTab === 'issues'" class="tab-content-card">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-tasks me-2"></i>
+                                Issues in {{ selectedSprint?.name }}
+                                <span class="badge bg-info ms-2">{{ filteredIssues.length }}</span>
+                            </h5>
+
+                            <!-- Search and Filters -->
+                            <div class="filter-controls">
+                                <div class="search-box me-3">
+                                    <div class="position-relative">
+                                        <input type="text"
+                                               class="form-control form-control-sm"
+                                               placeholder="Search issues..."
+                                               [(ngModel)]="searchTerm">
+                                        <i class="fas fa-search search-icon"></i>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex gap-2">
+                                    <select class="form-select form-select-sm" [(ngModel)]="statusFilter">
+                                        <option value="">All Status</option>
+                                        <option *ngFor="let status of uniqueStatuses" [value]="status">
+                                            {{ status }}
+                                        </option>
+                                    </select>
+
+                                    <select class="form-select form-select-sm" [(ngModel)]="priorityFilter">
+                                        <option value="">All Priority</option>
+                                        <option *ngFor="let priority of uniquePriorities" [value]="priority">
+                                            {{ priority }}
+                                        </option>
+                                    </select>
+
+                                    <button class="btn btn-outline-secondary btn-sm" (click)="resetFilters()">
+                                        <i class="fas fa-undo"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-body p-0">
+                        <div class="table-responsive" *ngIf="paginatedIssues.length > 0; else noIssues">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                <tr>
+                                    <!-- NEW: Sortable headers -->
+                                    <th style="cursor: pointer;" (click)="sortBy('jiraKey')">
+                                        Issue
+                                        <i [class]="getSortIcon('jiraKey')"></i>
+                                    </th>
+                                    <th style="cursor: pointer;" (click)="sortBy('summary')">
+                                        Summary
+                                        <i [class]="getSortIcon('summary')"></i>
+                                    </th>
+                                    <th style="cursor: pointer;" (click)="sortBy('assigneeDisplayName')">
+                                        Assignee
+                                        <i [class]="getSortIcon('assigneeDisplayName')"></i>
+                                    </th>
+                                    <th style="cursor: pointer;" (click)="sortBy('status')">
+                                        Status
+                                        <i [class]="getSortIcon('status')"></i>
+                                    </th>
+                                    <th style="cursor: pointer;" (click)="sortBy('priority')">
+                                        Priority
+                                        <i [class]="getSortIcon('priority')"></i>
+                                    </th>
+                                    <th style="cursor: pointer;" (click)="sortBy('linkedTestCases')">
+                                        Test Cases
+                                        <i [class]="getSortIcon('linkedTestCases')"></i>
+                                    </th>
+                                    <th style="cursor: pointer;" (click)="sortBy('keywordCount')">
+                                        Keywords
+                                        <i [class]="getSortIcon('keywordCount')"></i>
+                                    </th>
+                                    <th>Actions</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr *ngFor="let issue of paginatedIssues">
+                                    <td>
+                                        <strong>{{ issue.jiraKey }}</strong>
+                                        <div class="text-muted small">{{ issue.issueType }}</div>
+                                    </td>
+                                    <td>
+                                        <div class="issue-summary">{{ issue.summary }}</div>
+                                    </td>
+                                    <td>
+                                        <div *ngIf="issue.assigneeDisplayName">
+                                            {{ issue.assigneeDisplayName }}
+                                            <div class="text-muted small">{{ issue.assignee }}</div>
+                                        </div>
+                                        <span *ngIf="!issue.assigneeDisplayName" class="text-muted">Unassigned</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge" [class]="getStatusColor(issue.status)">
+                                            {{ issue.status }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge" [class]="getPriorityColor(issue.priority)">
+                                            {{ issue.priority }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="test-cases-column">
+                                            <div class="d-flex align-items-center">
+                                                <span class="badge bg-primary me-2">{{ issue.linkedTestCases.length }}</span>
+                                                <div class="btn-group" *ngIf="issue.linkedTestCases.length > 0">
+                                                    <button class="btn btn-sm btn-outline-info dropdown-toggle"
+                                                            type="button"
+                                                            data-bs-toggle="dropdown">
+                                                        View
+                                                    </button>
+                                                    <ul class="dropdown-menu">
+                                                        <li *ngFor="let testCase of issue.linkedTestCases">
+                                                            <a class="dropdown-item"
+                                                               (click)="openTestCaseModal(testCase, issue)"
+                                                               style="cursor: pointer;">
+                                                                {{ testCase.qtestTitle }}
+                                                                <span class="badge ms-2" [class]="getAutomationStatusColor(testCase.automationStatus)">
+                                                                    {{ testCase.automationStatus }}
+                                                                </span>
+                                                            </a>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-warning" *ngIf="issue.keywordCount > 0">
+                                            {{ issue.keywordCount }}
+                                        </span>
+                                        <span class="text-muted" *ngIf="issue.keywordCount === 0">0</span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <button class="btn btn-sm btn-outline-primary"
+                                                    (click)="openKeywordModal(issue)"
+                                                    title="Search Keywords">
+                                                <i class="fas fa-search"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <ng-template #noIssues>
+                            <div class="no-data">
+                                <i class="fas fa-tasks text-muted"></i>
+                                <h5 class="mt-3 text-muted">No issues found</h5>
+                                <p class="text-muted">
+                                    {{ searchTerm ? 'No issues match your search criteria' : 'No issues found in this sprint' }}
+                                </p>
+                            </div>
+                        </ng-template>
+
+                        <!-- Pagination -->
+                        <div class="d-flex justify-content-between align-items-center p-3" *ngIf="totalPages > 1">
+                            <div class="text-muted">
+                                Showing {{ ((currentPage - 1) * itemsPerPage) + 1 }} to
+                                {{ Math.min(currentPage * itemsPerPage, filteredIssues.length) }}
+                                of {{ filteredIssues.length }} issues
+                            </div>
+                            <nav>
+                                <ul class="pagination pagination-sm mb-0">
+                                    <li class="page-item" [class.disabled]="currentPage === 1">
+                                        <a class="page-link" (click)="goToPage(currentPage - 1)" style="cursor: pointer;">Previous</a>
+                                    </li>
+                                    <li class="page-item"
+                                        *ngFor="let page of [].constructor(totalPages); let i = index"
+                                        [class.active]="currentPage === i + 1">
+                                        <a class="page-link" (click)="goToPage(i + 1)" style="cursor: pointer;">{{ i + 1 }}</a>
+                                    </li>
+                                    <li class="page-item" [class.disabled]="currentPage === totalPages">
+                                        <a class="page-link" (click)="goToPage(currentPage + 1)" style="cursor: pointer;">Next</a>
+                                    </li>
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics Tab -->
+            <div *ngIf="activeTab === 'statistics'" class="tab-content-card">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-chart-bar me-2"></i>
+                            Sprint Statistics - {{ selectedSprint?.name }}
+                        </h5>
+                    </div>
+                    <div class="card-body" *ngIf="sprintStatistics">
+                        <!-- Overall Stats -->
+                        <div class="row mb-4">
+                            <div class="col-md-3">
+                                <div class="stat-card">
+                                    <div class="stat-value">{{ sprintStatistics.totalTestCases }}</div>
+                                    <div class="stat-label">Total Test Cases</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stat-card ready">
+                                    <div class="stat-value">{{ sprintStatistics.readyToAutomate }}</div>
+                                    <div class="stat-label">Ready to Automate</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stat-card danger">
+                                    <div class="stat-value">{{ sprintStatistics.notAutomatable }}</div>
+                                    <div class="stat-label">Not Automatable</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="stat-card warning">
+                                    <div class="stat-value">{{ sprintStatistics.pending }}</div>
+                                    <div class="stat-label">Pending</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Project Breakdown -->
+                        <div class="project-breakdown" *ngIf="sprintStatistics.projectBreakdown">
+                            <h6 class="mb-3">Project Breakdown</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                    <tr>
+                                        <th>Project</th>
+                                        <th>Ready to Automate</th>
+                                        <th>Not Automatable</th>
+                                        <th>Pending</th>
+                                        <th>Total</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr *ngFor="let project of sprintStatistics.projectBreakdown | keyvalue">
+                                        <td><strong>{{ project.key }}</strong></td>
+                                        <td>
+                                            <span class="badge bg-success">
+                                                {{ project.value['READY_TO_AUTOMATE'] || 0 }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-danger">
+                                                {{ project.value['NOT_AUTOMATABLE'] || 0 }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-warning">
+                                                {{ project.value['PENDING'] || 0 }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <strong>
+                                                {{ (project.value['READY_TO_AUTOMATE'] || 0) +
+                                                (project.value['NOT_AUTOMATABLE'] || 0) +
+                                                (project.value['PENDING'] || 0) }}
+                                            </strong>
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Remaining modals stay the same as in the original -->
+<!-- Test Case Modal -->
+<p-dialog [modal]="true"
+          [(visible)]="showTestCaseModal"
+          [style]="{ width: '60rem' }"
+          header="Test Case Details">
+    <div *ngIf="selectedTestCase && selectedIssue">
+        <div class="row">
+            <div class="col-md-6">
+                <h6 class="text-primary">Test Case Information</h6>
+                <div class="info-card">
+                    <p><strong>Title:</strong> {{ selectedTestCase.qtestTitle }}</p>
+                    <p><strong>QTest ID:</strong> {{ selectedTestCase.qtestId || 'N/A' }}</p>
+                    <p><strong>Current Status:</strong>
+                        <span class="badge" [class]="getAutomationStatusColor(selectedTestCase.automationStatus)">
+                            {{ selectedTestCase.automationStatus }}
+                        </span>
+                    </p>
+                    <p><strong>Project:</strong> {{ selectedTestCase.projectName || 'Not mapped' }}</p>
+                    <p><strong>Assigned Tester:</strong> {{ selectedTestCase.assignedTesterName || 'Not assigned' }}</p>
+                    <p><strong>Domain:</strong> {{ selectedTestCase.domainMapped || 'N/A' }}</p>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h6 class="text-primary">Related Jira Issue</h6>
+                <div class="info-card">
+                    <p><strong>Key:</strong> {{ selectedIssue.jiraKey }}</p>
+                    <p><strong>Summary:</strong> {{ selectedIssue.summary }}</p>
+                    <p><strong>Status:</strong>
+                        <span class="badge" [class]="getStatusColor(selectedIssue.status)">
+                            {{ selectedIssue.status }}
+                        </span>
+                    </p>
+                    <p><strong>Priority:</strong>
+                        <span class="badge" [class]="getPriorityColor(selectedIssue.priority)">
+                            {{ selectedIssue.priority }}
+                        </span>
+                    </p>
+                    <p><strong>Assignee:</strong> {{ selectedIssue.assigneeDisplayName || 'Unassigned' }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-12">
+                <h6 class="text-primary">Automation Assessment</h6>
+                <div class="automation-controls">
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input"
+                               type="radio"
+                               name="automationChoice"
+                               id="canAutomate"
+                               [checked]="selectedTestCase.canBeAutomated"
+                               (change)="updateTestCaseAutomationFlags(true, false)">
+                        <label class="form-check-label text-success" for="canAutomate">
+                            <i class="fas fa-check me-1"></i>
+                            Can be Automated
+                        </label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input"
+                               type="radio"
+                               name="automationChoice"
+                               id="cannotAutomate"
+                               [checked]="selectedTestCase.cannotBeAutomated"
+                               (change)="updateTestCaseAutomationFlags(false, true)">
+                        <label class="form-check-label text-danger" for="cannotAutomate">
+                            <i class="fas fa-times me-1"></i>
+                            Cannot be Automated
+                        </label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input"
+                               type="radio"
+                               name="automationChoice"
+                               id="pending"
+                               [checked]="!selectedTestCase.canBeAutomated && !selectedTestCase.cannotBeAutomated"
+                               (change)="updateTestCaseAutomationFlags(false, false)">
+                        <label class="form-check-label text-warning" for="pending">
+                            <i class="fas fa-clock me-1"></i>
+                            Pending Assessment
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-3" *ngIf="selectedTestCase.canBeAutomated">
+            <div class="col-12">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    This test case is marked as automatable.
+                    <button class="btn btn-sm btn-primary ms-2"
+                            (click)="openMappingModal(selectedTestCase)">
+                        <i class="fas fa-link me-1"></i>
+                        Map to Project & Tester
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <button class="btn btn-secondary" (click)="closeTestCaseModal()">
+            Close
+        </button>
+    </ng-template>
+</p-dialog>
+
+<!-- Mapping Modal -->
+<p-dialog [modal]="true"
+          [(visible)]="showMappingModal"
+          [style]="{ width: '50rem' }"
+          header="Map Test Case">
+    <div *ngIf="selectedTestCase">
+        <div class="row">
+            <div class="col-12 mb-3">
+                <h6 class="text-primary">Test Case: {{ selectedTestCase.qtestTitle }}</h6>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="projectSelect" class="form-label">Select Project</label>
+                    <select class="form-select"
+                            id="projectSelect"
+                            [(ngModel)]="selectedProject">
+                        <option [ngValue]="null">Choose a project...</option>
+                        <option *ngFor="let project of projects" [ngValue]="project">
+                            {{ project.name }} ({{ project.domain?.name }})
+                        </option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="testerSelect" class="form-label">Select Tester</label>
+                    <select class="form-select"
+                            id="testerSelect"
+                            [(ngModel)]="selectedTester">
+                        <option [ngValue]="null">Choose a tester...</option>
+                        <option *ngFor="let tester of testers" [ngValue]="tester">
+                            {{ tester.name }} ({{ tester.role }})
+                        </option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="row" *ngIf="selectedProject">
+            <div class="col-12">
+                <div class="alert alert-light">
+                    <h6>Project Details:</h6>
+                    <p class="mb-1"><strong>Name:</strong> {{ selectedProject.name }}</p>
+                    <p class="mb-1"><strong>Description:</strong> {{ selectedProject.description }}</p>
+                    <p class="mb-0"><strong>Domain:</strong> {{ selectedProject.domain?.name }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <button class="btn btn-secondary me-2" (click)="closeMappingModal()">
+            Cancel
+        </button>
+        <button class="btn btn-primary"
+                (click)="mapTestCase()"
+                [disabled]="!selectedProject || !selectedTester || loading">
+            <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
+            <i class="fas fa-link me-2" *ngIf="!loading"></i>
+            {{ loading ? 'Mapping...' : 'Map Test Case' }}
+        </button>
+    </ng-template>
+</p-dialog>
+
+<!-- Keyword Search Modal -->
+<p-dialog [modal]="true"
+          [(visible)]="showKeywordModal"
+          [style]="{ width: '40rem' }"
+          header="Search Keywords in Comments">
+    <div *ngIf="selectedIssue">
+        <div class="row">
+            <div class="col-12 mb-3">
+                <h6 class="text-primary">Issue: {{ selectedIssue.jiraKey }}</h6>
+                <p class="text-muted">{{ selectedIssue.summary }}</p>
+                <p class="small text-info" *ngIf="selectedIssue.keywordCount > 0">
+                    Previous search found {{ selectedIssue.keywordCount }} occurrences
+                    <span *ngIf="selectedIssue.searchKeyword">
+                        of "{{ selectedIssue.searchKeyword }}"
+                    </span>
+                </p>
+            </div>
+        </div>
+
+        <form [formGroup]="keywordSearchForm" (ngSubmit)="searchKeyword()">
+            <div class="row">
+                <div class="col-12">
+                    <div class="mb-3">
+                        <label for="keyword" class="form-label">Keyword to Search</label>
+                        <input type="text"
+                               class="form-control"
+                               id="keyword"
+                               formControlName="keyword"
+                               placeholder="Enter keyword (e.g., 'observation', 'bug', 'issue')"
+                               [class.is-invalid]="keywordSearchForm.get('keyword')?.invalid && keywordSearchForm.get('keyword')?.touched">
+                        <div class="invalid-feedback"
+                             *ngIf="keywordSearchForm.get('keyword')?.invalid && keywordSearchForm.get('keyword')?.touched">
+                            Please enter a keyword with at least 3 characters.
+                        </div>
+                        <div class="form-text">
+                            Search will look through all comments in this Jira issue for the specified keyword.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <button class="btn btn-secondary me-2" (click)="closeKeywordModal()">
+            Cancel
+        </button>
+        <button class="btn btn-primary"
+                (click)="searchKeyword()"
+                [disabled]="!keywordSearchForm.valid || loading">
+            <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
+            <i class="fas fa-search me-2" *ngIf="!loading"></i>
+            {{ loading ? 'Searching...' : 'Search Comments' }}
+        </button>
+    </ng-template>
+</p-dialog>
