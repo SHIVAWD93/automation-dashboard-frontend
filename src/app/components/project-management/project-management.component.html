@@ -12,7 +12,7 @@
           </p>
         </div>
         <div *ngIf="showRegistration" class="flex items-center pr-4 gap-3">
-          <p-button label="Create Test case" (onClick)="showDialog = !showDialog"></p-button>
+          <p-button label="Create Project" (onClick)="showDialog = !showDialog"></p-button>
         </div>
       </div>
     </div>
@@ -107,7 +107,7 @@
   </div>
 </div>
 
-<p-dialog [modal]="true" [(visible)]="showDialog" [style]="{ width: '50rem' }">
+<p-dialog [modal]="true" [(visible)]="showDialog"  appendTo="body" [style]="{ width: '50rem' }">
   <ng-template pTemplate="header">
     <div>
       <h5 class="card-title mb-0">

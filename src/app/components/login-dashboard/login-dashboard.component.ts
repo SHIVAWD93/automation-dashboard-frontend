@@ -2,6 +2,7 @@ import { Component, EventEmitter, Output } from "@angular/core";
 import { FormBuilder, FormGroup, Validators } from "@angular/forms";
 import { AppService } from "../../services/app.service";
 import { Router } from "@angular/router";
+import { SessionStorageService } from "../../services/session-storage.service";
 
 @Component({
   selector: "app-login-dashboard",
@@ -21,10 +22,12 @@ export class LoginDashboardComponent {
   constructor(
     private fb: FormBuilder,
     private appService: AppService,
-    private router: Router
+    private router: Router,
+    private sessionStorageService: SessionStorageService
   ) {}
 
   ngOnInit(): void {
+    this.sessionLogin();
     this.loginForm = this.fb.group({
       username: ["", Validators.required],
       password: ["", Validators.required],
@@ -39,9 +42,9 @@ export class LoginDashboardComponent {
   onLogin() {
     if (this.loginForm.valid) {
       const { username, password } = this.loginForm.value;
-
       this.appService.getUserInfo(username, password).subscribe({
         next: (user: any) => {
+          this.sessionStorageService.saveWithExpiry('userInfo', user, 3600000);
           this.appService.userPermission = user.userPermissions;
           this.appService.authenticated.next(true);
           this.authenticated.emit(true);
@@ -106,5 +109,15 @@ export class LoginDashboardComponent {
   }
   togglePasswordVisibility(): void {
     this.showPassword = !this.showPassword;
+  }
+
+  sessionLogin(): void {
+    let value = this.sessionStorageService.getWithExpiry("userInfo");
+    if (value) {
+      this.appService.userPermission = value.userPermissions;
+      this.appService.authenticated.next(true);
+      this.authenticated.emit(true);
+      this.router.navigate(["/dashboard"]);
+    }
   }
 }

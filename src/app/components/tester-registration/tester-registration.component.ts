@@ -79,6 +79,7 @@ export class TesterRegistrationComponent implements OnInit {
             this.loadTesters();
             this.resetForm();
             this.loading = false;
+            this.showDialog = false;
           },
           (error) => {
             console.error("Error creating tester:", error);
@@ -93,6 +94,7 @@ export class TesterRegistrationComponent implements OnInit {
             this.loadTesters();
             this.resetForm();
             this.loading = false;
+            this.showDialog = false;
           },
           (error) => {
             console.error("Error creating tester:", error);
@@ -131,7 +133,13 @@ export class TesterRegistrationComponent implements OnInit {
   }
 
   resetForm(): void {
-    this.testerForm.reset();
+    this.testerForm.reset({
+      name: "",
+      role: "",
+      gender: "",
+      experience: 0, // Default value for experience
+    });
+    this.testerForm.updateValueAndValidity();
     this.selectedFile = null;
     this.previewUrl = null;
   }
