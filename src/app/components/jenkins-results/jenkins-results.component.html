@@ -139,6 +139,15 @@
                                     {{ status.label }}
                                 </option>
                             </select>
+                            <!-- Threshold input in header filter section -->
+                            <input
+                                    type="number"
+                                    class="form-control form-control-sm ms-2"
+                                    style="width:100px"
+                                    placeholder="Threshold %"
+                                    [(ngModel)]="passPercentageThreshold"
+                                    (input)="applyFilters()"
+                            >
                         </div>
                     </div>
                 </div>
@@ -212,6 +221,13 @@
                                         title="Sync this job"
                                 >
                                     <i class="fas fa-sync-alt"></i>
+                                </button>
+                                <button
+                                        class="btn btn-outline-success btn-sm ms-1"
+                                        (click)="assignTesters(result)"
+                                        *ngIf="automationTesterSelection[result.id] || manualTesterSelection[result.id]"
+                                >
+                                  <i class="fas fa-save"></i>
                                 </button>
                             </td>
                         </tr>
@@ -354,6 +370,75 @@
                             </p>
                         </div>
                     </ng-template>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add new table headers -->
+    <div class="row mt-4" *ngIf="selectedJob">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-user-tie me-2"></i>
+                                Testers - {{ selectedJob.jobName }} (Build #{{ selectedJob.buildNumber }})
+                            </h5>
+                        </div>
+                    </div>
+                </div>
+                <div class="table-scrollable">
+                    <table class="table table-sm mb-0">
+                        <thead>
+                        <tr>
+                            <th>Automation Tester</th>
+                            <th>Manual Tester</th>
+                            <th>Pass %</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td>
+                                <div *ngIf="selectedJob.automationTester; else autoSel">{{ displayTester(selectedJob.automationTester) }}</div>
+                                <ng-template #autoSel>
+                                  <select class="form-select form-select-sm" [(ngModel)]="automationTesterSelection[selectedJob.id]">
+                                     <option [ngValue]="null">Select</option>
+                                     <option *ngFor="let tester of testers" [ngValue]="tester.id">{{ tester.name }}</option>
+                                  </select>
+                                </ng-template>
+                            </td>
+                            <td>
+                                <div *ngIf="selectedJob.manualTester; else manualSel">{{ displayTester(selectedJob.manualTester) }}</div>
+                                <ng-template #manualSel>
+                                  <select class="form-select form-select-sm" [(ngModel)]="manualTesterSelection[selectedJob.id]">
+                                     <option [ngValue]="null">Select</option>
+                                     <option *ngFor="let tester of testers" [ngValue]="tester.id">{{ tester.name }}</option>
+                                  </select>
+                                </ng-template>
+                            </td>
+                            <td>
+                                <span class="badge" [ngClass]="{'bg-success': getPassPercentage(selectedJob) >= 80, 'bg-warning': getPassPercentage(selectedJob) < 80 && getPassPercentage(selectedJob) >= 50, 'bg-danger': getPassPercentage(selectedJob) < 50}">
+                                   {{ getPassPercentage(selectedJob) }}%
+                                </span>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Notes textarea in selected job detail section above test cases -->
+    <div class="row mt-4" *ngIf="selectedJob">
+        <div class="col-12">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h6 class="card-title mb-2"><i class="fas fa-bug me-2"></i>Bugs Identified / Failure Reasons</h6>
+                    <textarea class="form-control" rows="3" [(ngModel)]="jobNotes" placeholder="Enter details..."></textarea>
+                    <button class="btn btn-success btn-sm mt-2" (click)="saveJobNotes()"><i class="fas fa-save me-1"></i>Save</button>
                 </div>
             </div>
         </div>

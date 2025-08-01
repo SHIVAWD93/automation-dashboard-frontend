@@ -29,7 +29,7 @@
             </h5>
             <div class="filter-section">
               <select class="form-select form-select-sm" [(ngModel)]="selectedDomainFilter"
-                (change)="onDomainFilterChange()" style="width: 200px;">
+                      (change)="onDomainFilterChange()" style="width: 200px;">
                 <option value="">All Domains</option>
                 <option *ngFor="let domain of domains" [value]="domain.id">
                   {{ domain.name }}
@@ -57,7 +57,17 @@
                   <div class="domain-info mb-2">
                     <small class="text-primary">
                       <i class="fas fa-layer-group me-1"></i>
-                      {{ project.domain?.name }}
+                      {{ project.domain.name }}
+                    </small>
+                  </div>
+
+                  <!-- NEW: Jira Configuration Display -->
+                  <div class="jira-info mb-2" *ngIf="project.jiraProjectKey || project.jiraBoardId">
+                    <small class="text-info">
+                      <i class="fab fa-jira me-1"></i>
+                      <span *ngIf="project.jiraProjectKey">{{ project.jiraProjectKey }}</span>
+                      <span *ngIf="project.jiraProjectKey && project.jiraBoardId"> | </span>
+                      <span *ngIf="project.jiraBoardId">Board: {{ project.jiraBoardId }}</span>
                     </small>
                   </div>
 
@@ -120,26 +130,46 @@
   <div>
     <div class="card-body">
       <form [formGroup]="projectForm" (ngSubmit)="onSubmit()">
-        <div class="mb-3">
-          <label for="domainId" class="form-label">Domain *</label>
-          <select class="form-control" id="domainId" formControlName="domainId"
-            [class.is-invalid]="projectForm.get('domainId')?.invalid && projectForm.get('domainId')?.touched">
-            <option value="">Select Domain</option>
-            <option *ngFor="let domain of domains" [value]="domain.id">
-              {{ domain.name }}
-            </option>
-          </select>
-          <div class="invalid-feedback"
-            *ngIf="projectForm.get('domainId')?.invalid && projectForm.get('domainId')?.touched">
-            Please select a domain.
+        <!-- Basic Information Section -->
+        <div class="row">
+          <div class="col-md-6">
+            <div class="mb-3">
+              <label for="domainId" class="form-label">Domain *</label>
+              <select class="form-control" id="domainId" formControlName="domainId"
+                      [class.is-invalid]="projectForm.get('domainId')?.invalid && projectForm.get('domainId')?.touched">
+                <option value="">Select Domain</option>
+                <option *ngFor="let domain of domains" [value]="domain.id">
+                  {{ domain.name }}
+                </option>
+              </select>
+              <div class="invalid-feedback"
+                   *ngIf="projectForm.get('domainId')?.invalid && projectForm.get('domainId')?.touched">
+                Please select a domain.
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="mb-3">
+              <label for="status" class="form-label">Status *</label>
+              <select class="form-select" id="status" formControlName="status"
+                      [class.is-invalid]="projectForm.get('status')?.invalid && projectForm.get('status')?.touched">
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+                <option value="Completed">Completed</option>
+              </select>
+              <div class="invalid-feedback"
+                   *ngIf="projectForm.get('status')?.invalid && projectForm.get('status')?.touched">
+                Please select a status.
+              </div>
+            </div>
           </div>
         </div>
 
         <div class="mb-3">
           <label for="name" class="form-label">Application Name *</label>
           <input type="text" class="form-control" id="name" formControlName="name"
-            [class.is-invalid]="projectForm.get('name')?.invalid && projectForm.get('name')?.touched"
-            placeholder="Enter application name">
+                 [class.is-invalid]="projectForm.get('name')?.invalid && projectForm.get('name')?.touched"
+                 placeholder="Enter application name">
           <div class="invalid-feedback" *ngIf="projectForm.get('name')?.invalid && projectForm.get('name')?.touched">
             Project name is required and must be at least 3 characters long.
           </div>
@@ -147,30 +177,65 @@
 
         <div class="mb-3">
           <label for="description" class="form-label">Description *</label>
-          <textarea class="form-control" id="description" rows="4" formControlName="description"
-            [class.is-invalid]="projectForm.get('description')?.invalid && projectForm.get('description')?.touched"
-            placeholder="Enter application description"></textarea>
+          <textarea class="form-control" id="description" rows="3" formControlName="description"
+                    [class.is-invalid]="projectForm.get('description')?.invalid && projectForm.get('description')?.touched"
+                    placeholder="Enter application description"></textarea>
           <div class="invalid-feedback"
-            *ngIf="projectForm.get('description')?.invalid && projectForm.get('description')?.touched">
+               *ngIf="projectForm.get('description')?.invalid && projectForm.get('description')?.touched">
             Description is required and must be at least 10 characters long.
           </div>
         </div>
 
-        <div class="mb-3">
-          <label for="status" class="form-label">Status *</label>
-          <select class="form-select" id="status" formControlName="status"
-            [class.is-invalid]="projectForm.get('status')?.invalid && projectForm.get('status')?.touched">
-            <option value="Active">Active</option>
-            <option value="Inactive">Inactive</option>
-            <option value="Completed">Completed</option>
-          </select>
-          <div class="invalid-feedback"
-            *ngIf="projectForm.get('status')?.invalid && projectForm.get('status')?.touched">
-            Please select a status.
+        <!-- NEW: Jira Configuration Section -->
+        <div class="card mb-3">
+          <div class="card-header">
+            <h6 class="mb-0">
+              <i class="fab fa-jira me-2"></i>
+              Jira Integration Configuration
+              <small class="text-muted">(Optional)</small>
+            </h6>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="jiraProjectKey" class="form-label">
+                    Jira Project Key
+                    <i class="fas fa-info-circle text-muted ms-1"
+                       title="The project key from Jira (e.g., PROJ, QA, TEST)"></i>
+                  </label>
+                  <input type="text" class="form-control" id="jiraProjectKey" formControlName="jiraProjectKey"
+                         placeholder="e.g., PROJ, QA, TEST"
+                         style="text-transform: uppercase;">
+                  <div class="form-text">
+                    Enter the Jira project key for integration with sprints and issues
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="jiraBoardId" class="form-label">
+                    Jira Board ID
+                    <i class="fas fa-info-circle text-muted ms-1"
+                       title="The board ID from Jira (numeric value)"></i>
+                  </label>
+                  <input type="text" class="form-control" id="jiraBoardId" formControlName="jiraBoardId"
+                         placeholder="e.g., 123, 456"
+                         pattern="[0-9]*">
+                  <div class="form-text">
+                    Enter the Jira board ID for sprint management
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="alert alert-info" *ngIf="projectForm.get('jiraProjectKey')?.value || projectForm.get('jiraBoardId')?.value">
+              <i class="fas fa-lightbulb me-2"></i>
+              <strong>Jira Integration:</strong> When configured, this project will use these settings for sprint and issue synchronization in the Manual Coverage module.
+            </div>
           </div>
         </div>
 
-        <div class="flex gap-3">
+        <div class="d-flex gap-3">
           <button type="submit" class="btn btn-primary" [disabled]="!projectForm.valid || loading">
             <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
             <i class="fas fa-save me-2" *ngIf="!loading"></i>

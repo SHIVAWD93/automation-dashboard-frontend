@@ -6,6 +6,7 @@ import { ProjectManagementComponent } from "./components/project-management/proj
 import { TestCaseTrackingComponent } from "./components/test-case-tracking/test-case-tracking.component";
 import { BulkUploadComponent } from "./components/bulk-upload/bulk-upload.component";
 import { JenkinsResultsComponent } from "./components/jenkins-results/jenkins-results.component";
+import { ManualCoverageComponent } from "./components/manual-coverage/manual-coverage.component";
 import { LoginDashboardComponent } from "./components/login-dashboard/login-dashboard.component";
 import { AuthGuard } from "./auth.guard";
 
@@ -29,6 +30,11 @@ const routes: Routes = [
   {
     path: "test-cases",
     component: TestCaseTrackingComponent,
+    canActivate: [AuthGuard],
+  },
+  {
+    path: "manual-coverage",
+    component: ManualCoverageComponent,
     canActivate: [AuthGuard],
   },
   {

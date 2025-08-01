@@ -307,11 +307,11 @@ export class DashboardComponent implements OnInit {
     this.statusChart = new Chart(ctx, {
       type: 'bar',
       data: {
-        labels: ['Ready to Automate', 'In Progress', 'Automated', 'Completed'],
+        labels: ['Ready to Automate', 'In Progress', 'Automated', 'failed'],
         datasets: [{
           label: 'Test Cases',
           data: data,
-          backgroundColor: ['#17a2b8', '#ffc107', '#28a745', '#6f42c1'],
+          backgroundColor: ['#17a2b8', '#ffc107', '#28a745', '#dc3545'],
           borderColor: ['#138496', '#e0a800', '#1e7e34', '#5a32a3'],
           borderWidth: 1
         }]

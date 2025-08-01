@@ -31,6 +31,11 @@
             </a>
           </li>
           <li class="nav-item">
+            <a class="nav-link" routerLink="/manual-coverage" routerLinkActive="active">
+              <i class="fab fa-jira me-1"></i>Manual Coverage
+            </a>
+          </li>
+          <li class="nav-item">
             <a class="nav-link" routerLink="/jenkins-results" routerLinkActive="active">
               <i class="fab fa-jenkins me-1"></i>
               Jenkins Results
@@ -38,7 +43,7 @@
           </li>
           <div class="nav-item">
             <button class="btn btn-danger" (click)="logout()">
-             <i class="fas fa-sign-out-alt"></i> Logout
+              <i class="fas fa-sign-out-alt"></i> Logout
             </button>
           </div>
         </ul>

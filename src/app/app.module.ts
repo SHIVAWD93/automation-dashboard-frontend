@@ -12,6 +12,7 @@ import { ProjectManagementComponent } from "./components/project-management/proj
 import { TestCaseTrackingComponent } from "./components/test-case-tracking/test-case-tracking.component";
 import { BulkUploadComponent } from "./components/bulk-upload/bulk-upload.component";
 import { JenkinsResultsComponent } from "./components/jenkins-results/jenkins-results.component";
+import { ManualCoverageComponent } from "./components/manual-coverage/manual-coverage.component";
 
 import { DropdownModule } from "primeng/dropdown";
 import { ButtonModule } from "primeng/button";
@@ -34,6 +35,16 @@ export class FilterPipe implements PipeTransform {
   }
 }
 
+@Pipe({ name: "keyvalue" })
+export class KeyValuePipe implements PipeTransform {
+  transform(value: any): any[] {
+    if (!value) {
+      return [];
+    }
+    return Object.keys(value).map(key => ({ key: key, value: value[key] }));
+  }
+}
+
 @NgModule({
   declarations: [
     AppComponent,
@@ -43,7 +54,9 @@ export class FilterPipe implements PipeTransform {
     TestCaseTrackingComponent,
     BulkUploadComponent,
     JenkinsResultsComponent,
+    ManualCoverageComponent,
     FilterPipe,
+    KeyValuePipe,
     LoginDashboardComponent,
   ],
   imports: [

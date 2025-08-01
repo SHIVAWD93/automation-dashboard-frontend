@@ -17,4 +17,7 @@ export interface Project {
   createdAt: Date;
   updatedAt: Date;
   testCaseCount?: number;
+  // NEW: Jira configuration fields
+  jiraProjectKey?: string;
+  jiraBoardId?: string;
 }
