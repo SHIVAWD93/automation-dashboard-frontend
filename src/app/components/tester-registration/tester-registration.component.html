@@ -34,7 +34,7 @@
                 <div class="card-body text-center">
                   <div class="profile-image-container">
                     <img
-                      [src]="tester.profileImageUrl ? 'data:image/png;base64,' + tester.profileImageUrl : '/assets/default-avatar.svg'"
+                      [src]="tester.profileImageUrl ? 'data:image/png;base64,' + tester.profileImageUrl : '/assets/user.png'"
                       alt="{{ tester.name }}" class="profile-image" />
                   </div>
 
@@ -71,7 +71,7 @@
     </div>
   </div>
 </div>
-<p-dialog [modal]="true" [(visible)]="showDialog" [style]="{ width: '50rem' }">
+<p-dialog [modal]="true" [(visible)]="showDialog" appendTo="body" [style]="{ width: '50rem' }">
   <ng-template pTemplate="header">
     <div>
       <h5 class="card-title mb-0">
@@ -128,7 +128,7 @@
         </div>
 
         <div class="d-grid gap-2">
-          <button type="submit" class="btn btn-primary" [disabled]="!testerForm.valid || loading">
+          <button type="submit" class="btn btn-primary" [disabled]="!testerForm.valid">
             <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
             <i class="fas fa-save me-2" *ngIf="!loading"></i>
             {{ loading ? 'Saving...' : 'Register Tester' }}
