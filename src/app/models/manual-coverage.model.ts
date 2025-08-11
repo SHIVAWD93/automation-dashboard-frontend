@@ -539,20 +539,6 @@ export class ManualCoverageComponent implements OnInit {
     }
   }
 
-  // Transform automation status for display
-  getAutomationStatusDisplay(status: string): string {
-    switch (status) {
-      case 'READY_TO_AUTOMATE':
-        return 'Ready to Automate';
-      case 'NOT_AUTOMATABLE':
-        return 'Not Automatable';
-      case 'PENDING':
-        return 'Pending';
-      default:
-        return status;
-    }
-  }
-
   getSprintStateColor(state: string): string {
     switch (state?.toLowerCase()) {
       case 'active':
