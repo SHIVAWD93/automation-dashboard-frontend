@@ -123,6 +123,11 @@ export class ManualCoverageComponent implements OnInit {
   selectedTestCaseTester: Tester | null = null;
   selectedTestCaseDomain: Domain | null = null;
 
+  // Global search properties
+  globalSearchKeyword: string = '';
+  globalSearchLoading: boolean = false;
+  globalSearchResult: { count: number; keyword: string } | null = null;
+
   constructor(
     private fb: FormBuilder,
     private apiService: ApiService
@@ -351,6 +356,39 @@ export class ManualCoverageComponent implements OnInit {
     this.showTestCaseModal = true;
   }
 
+  // New method to handle automation status changes without auto-closing modal
+  onAutomationStatusChange(status: string): void {
+    if (!this.selectedTestCase) return;
+
+    let canBeAutomated = false;
+    let cannotBeAutomated = false;
+
+    switch (status) {
+      case 'can_automate':
+        canBeAutomated = true;
+        break;
+      case 'cannot_automate':
+        cannotBeAutomated = true;
+        break;
+      case 'pending':
+        // Both remain false
+        break;
+    }
+
+    // Update locally first for immediate UI feedback
+    this.selectedTestCase.canBeAutomated = canBeAutomated;
+    this.selectedTestCase.cannotBeAutomated = cannotBeAutomated;
+    
+    // Update automation status display
+    if (canBeAutomated) {
+      this.selectedTestCase.automationStatus = 'READY_TO_AUTOMATE';
+    } else if (cannotBeAutomated) {
+      this.selectedTestCase.automationStatus = 'NOT_AUTOMATABLE';
+    } else {
+      this.selectedTestCase.automationStatus = 'PENDING';
+    }
+  }
+
   updateTestCaseAutomationFlags(canBeAutomated: boolean, cannotBeAutomated: boolean): void {
     if (!this.selectedTestCase) return;
 
@@ -361,7 +399,7 @@ export class ManualCoverageComponent implements OnInit {
     }).subscribe(
       (updatedTestCase: JiraTestCase) => {
         this.updateLocalTestCase(updatedTestCase);
-        this.showTestCaseModal = false;
+        // Don't auto-close modal
         this.loading = false;
 
         if (this.selectedSprint) {
@@ -375,33 +413,7 @@ export class ManualCoverageComponent implements OnInit {
     );
   }
 
-  // Test Case Mapping
-  openMappingModal(testCase: JiraTestCase): void {
-    this.selectedTestCase = testCase;
-    this.selectedProject = this.projects.find(p => p.id === testCase.projectId) || null;
-    this.selectedTester = this.testers.find(t => t.id === testCase.assignedTesterId) || null;
-    this.showMappingModal = true;
-  }
 
-  mapTestCase(): void {
-    if (!this.selectedTestCase || !this.selectedProject || !this.selectedTester) return;
-
-    this.loading = true;
-    this.apiService.mapTestCase(this.selectedTestCase.id, {
-      projectId: this.selectedProject.id,
-      testerId: this.selectedTester.id
-    }).subscribe(
-      (updatedTestCase: JiraTestCase) => {
-        this.updateLocalTestCase(updatedTestCase);
-        this.showMappingModal = false;
-        this.loading = false;
-      },
-      (error) => {
-        console.error('Error mapping test case:', error);
-        this.loading = false;
-      }
-    );
-  }
 
   // Keyword Search
   openKeywordModal(issue: JiraIssue): void {
@@ -597,32 +609,60 @@ export class ManualCoverageComponent implements OnInit {
 
   // Enhanced test case information save functionality
   saveTestCaseInformation(): void {
-    if (!this.selectedTestCase || !this.hasTestCaseChanges()) {
+    if (!this.selectedTestCase) {
       return;
     }
 
     this.loading = true;
     
-    const updateData = {
-      projectId: this.selectedTestCaseProject?.id || null,
-      testerId: this.selectedTestCaseTester?.id || null,
-      domainId: this.selectedTestCaseDomain?.id || null
-    };
+    // Save automation flags first
+    this.apiService.updateTestCaseAutomationFlags(this.selectedTestCase.id, {
+      canBeAutomated: this.selectedTestCase.canBeAutomated,
+      cannotBeAutomated: this.selectedTestCase.cannotBeAutomated
+    }).subscribe(
+      (automationResult) => {
+        // Then save the test case information if there are changes
+        if (this.hasTestCaseChanges()) {
+          const updateData = {
+            projectId: this.selectedTestCaseProject?.id || null,
+            testerId: this.selectedTestCaseTester?.id || null,
+            domainId: this.selectedTestCaseDomain?.id || null
+          };
 
-    this.apiService.updateTestCaseInformation(this.selectedTestCase.id, updateData).subscribe(
-      (updatedTestCase: JiraTestCase) => {
-        // Update the local test case data
-        this.updateLocalTestCase(updatedTestCase);
-        this.loading = false;
-        
-        // Update the selected test case for immediate UI feedback
-        this.selectedTestCase = updatedTestCase;
-        
-        // Show success message
-        console.log('Test case information updated successfully');
+          this.apiService.updateTestCaseInformation(this.selectedTestCase!.id, updateData).subscribe(
+            (updatedTestCase: JiraTestCase) => {
+              // Update the local test case data
+              this.updateLocalTestCase(updatedTestCase);
+              this.loading = false;
+              
+              // Update the selected test case for immediate UI feedback
+              this.selectedTestCase = updatedTestCase;
+              
+              // Show success message
+              console.log('Test case information updated successfully');
+              
+              if (this.selectedSprint) {
+                this.loadSprintStatistics(this.selectedSprint.id);
+              }
+            },
+            (error) => {
+              console.error('Error updating test case information:', error);
+              this.loading = false;
+            }
+          );
+        } else {
+          // Only automation flags were updated
+          this.updateLocalTestCase(automationResult);
+          this.loading = false;
+          console.log('Test case automation status updated successfully');
+          
+          if (this.selectedSprint) {
+            this.loadSprintStatistics(this.selectedSprint.id);
+          }
+        }
       },
       (error) => {
-        console.error('Error updating test case information:', error);
+        console.error('Error updating test case automation flags:', error);
         this.loading = false;
       }
     );
@@ -637,11 +677,14 @@ export class ManualCoverageComponent implements OnInit {
     const currentTester = this.testers.find(t => t.id === this.selectedTestCase!.assignedTesterId);
     const currentDomain = this.domains.find(d => d.name === this.selectedTestCase!.domainMapped);
 
-    return (
+    const hasInfoChanges = (
       this.selectedTestCaseProject !== currentProject ||
       this.selectedTestCaseTester !== currentTester ||
       this.selectedTestCaseDomain !== currentDomain
     );
+    
+    // Always return true if there are any changes (info or automation status)
+    return hasInfoChanges || true; // Since we always want to be able to save automation status
   }
 
   // Modal close handlers
@@ -656,12 +699,7 @@ export class ManualCoverageComponent implements OnInit {
     this.selectedTestCaseDomain = null;
   }
 
-  closeMappingModal(): void {
-    this.showMappingModal = false;
-    this.selectedTestCase = null;
-    this.selectedProject = null;
-    this.selectedTester = null;
-  }
+
 
   closeKeywordModal(): void {
     this.showKeywordModal = false;
@@ -683,5 +721,37 @@ export class ManualCoverageComponent implements OnInit {
   get uniqueAssignees(): string[] {
     const assignees = this.jiraIssues.map(issue => issue.assignee).filter(Boolean);
     return [...new Set(assignees)];
+  }
+
+  // Global search functionality
+  performGlobalSearch() {
+    if (!this.globalSearchKeyword || this.globalSearchKeyword.trim().length < 3) {
+      return;
+    }
+    
+    this.globalSearchLoading = true;
+    this.globalSearchResult = null;
+    
+    this.apiService.searchKeywordInComments('GLOBAL', { keyword: this.globalSearchKeyword.trim() }).subscribe(
+      (result) => {
+        this.globalSearchResult = { count: result.count || 0, keyword: this.globalSearchKeyword.trim() };
+        this.globalSearchLoading = false;
+        
+        // Auto-hide result after 5 seconds
+        setTimeout(() => {
+          this.globalSearchResult = null;
+        }, 5000);
+      },
+      (error) => {
+        console.error('Global search error:', error);
+        this.globalSearchLoading = false;
+        this.globalSearchResult = { count: 0, keyword: this.globalSearchKeyword.trim() };
+        
+        // Auto-hide error after 3 seconds
+        setTimeout(() => {
+          this.globalSearchResult = null;
+        }, 3000);
+      }
+    );
   }
 }

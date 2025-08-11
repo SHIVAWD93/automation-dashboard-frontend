@@ -88,9 +88,67 @@
 /* Filter Controls */
 .filter-controls {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 1rem;
   flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+/* Global Search Styles */
+.global-search-section {
+  min-width: 350px;
+}
+
+.global-search-container {
+  position: relative;
+}
+
+.global-search-group {
+  width: 100%;
+}
+
+.global-search-group .form-control {
+  border-radius: 20px 0 0 20px;
+  border: 2px solid #dee2e6;
+  background-color: rgba(255, 255, 255, 0.95);
+  color: #333;
+  font-size: 0.875rem;
+}
+
+.global-search-group .form-control:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+  background-color: #fff;
+}
+
+.global-search-group .btn {
+  border-radius: 0 20px 20px 0;
+  border: 2px solid #667eea;
+  border-left: none;
+  min-width: 40px;
+  background-color: #667eea;
+  color: white;
+}
+
+.global-search-group .btn:hover {
+  background-color: #5a6fd8;
+  border-color: #5a6fd8;
+}
+
+.global-search-result {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  margin-top: 0.25rem;
+}
+
+.global-search-result .badge {
+  font-size: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 15px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .search-box {
