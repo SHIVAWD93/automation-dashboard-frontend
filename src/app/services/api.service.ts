@@ -333,18 +333,34 @@ export class ApiService {
       .pipe(catchError(this.handleError));
   }
 
+  // Update test case information (project, tester, domain)
+  updateTestCaseInformation(testCaseId: number, updateData: { projectId?: number | null; testerId?: number | null; domainId?: number | null }): Observable<any> {
+    return this.http.put<any>(`${this.baseUrl}/manual-page/test-cases/${testCaseId}/information`, updateData, this.httpOptions)
+      .pipe(catchError(this.handleError));
+  }
+
   searchKeywordInComments(jiraKey: string, request: { keyword: string }): Observable<any> {
     return this.http.post<any>(`${this.baseUrl}/manual-page/issues/${jiraKey}/keyword-search`, request, this.httpOptions)
       .pipe(catchError(this.handleError));
   }
 
-  // NEW: Global keyword search
+  // Global keyword search across all Jira tickets
   globalKeywordSearch(keyword: string, jiraProjectKey?: string): Observable<any> {
     const request = {
       keyword: keyword,
       jiraProjectKey: jiraProjectKey || ''
     };
     return this.http.post<any>(`${this.baseUrl}/manual-page/global-keyword-search`, request, this.httpOptions)
+      .pipe(catchError(this.handleError));
+  }
+
+  // Get global search count for a keyword
+  getGlobalSearchCount(keyword: string, jiraProjectKey?: string): Observable<{ count: number; keyword: string }> {
+    const request = {
+      keyword: keyword,
+      jiraProjectKey: jiraProjectKey || ''
+    };
+    return this.http.post<{ count: number; keyword: string }>(`${this.baseUrl}/manual-page/global-search-count`, request, this.httpOptions)
       .pipe(catchError(this.handleError));
   }
 

@@ -301,7 +301,7 @@
                                                                style="cursor: pointer;">
                                                                 {{ testCase.qtestTitle }}
                                                                 <span class="badge ms-2" [class]="getAutomationStatusColor(testCase.automationStatus)">
-                                                                    {{ testCase.automationStatus }}
+                                                                    {{ getAutomationStatusDisplay(testCase.automationStatus) }}
                                                                 </span>
                                                             </a>
                                                         </li>
@@ -471,12 +471,68 @@
                     <p><strong>QTest ID:</strong> {{ selectedTestCase.qtestId || 'N/A' }}</p>
                     <p><strong>Current Status:</strong>
                         <span class="badge" [class]="getAutomationStatusColor(selectedTestCase.automationStatus)">
-                            {{ selectedTestCase.automationStatus }}
+                            {{ getAutomationStatusDisplay(selectedTestCase.automationStatus) }}
                         </span>
                     </p>
-                    <p><strong>Project:</strong> {{ selectedTestCase.projectName || 'Not mapped' }}</p>
-                    <p><strong>Assigned Tester:</strong> {{ selectedTestCase.assignedTesterName || 'Not assigned' }}</p>
-                    <p><strong>Domain:</strong> {{ selectedTestCase.domainMapped || 'N/A' }}</p>
+                    
+                    <!-- Enhanced Test Case Information Section with Dropdowns -->
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <h6 class="text-secondary">Update Test Case Information</h6>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label for="testCaseProject" class="form-label"><strong>Project:</strong></label>
+                            <select class="form-select form-select-sm" 
+                                    id="testCaseProject" 
+                                    [(ngModel)]="selectedTestCaseProject">
+                                <option [ngValue]="null">Select Project</option>
+                                <option *ngFor="let project of projects" [ngValue]="project">
+                                    {{ project.name }} ({{ project.domain?.name }})
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label for="testCaseTester" class="form-label"><strong>Assigned Tester:</strong></label>
+                            <select class="form-select form-select-sm" 
+                                    id="testCaseTester" 
+                                    [(ngModel)]="selectedTestCaseTester">
+                                <option [ngValue]="null">Select Tester</option>
+                                <option *ngFor="let tester of testers" [ngValue]="tester">
+                                    {{ tester.name }} ({{ tester.role }})
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label for="testCaseDomain" class="form-label"><strong>Domain:</strong></label>
+                            <select class="form-select form-select-sm" 
+                                    id="testCaseDomain" 
+                                    [(ngModel)]="selectedTestCaseDomain">
+                                <option [ngValue]="null">Select Domain</option>
+                                <option *ngFor="let domain of domains" [ngValue]="domain">
+                                    {{ domain.name }}
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Display current values -->
+                    <div class="current-values mt-2">
+                        <small class="text-muted">
+                            <strong>Current Values:</strong><br>
+                            Project: {{ selectedTestCase.projectName || 'Not mapped' }}<br>
+                            Tester: {{ selectedTestCase.assignedTesterName || 'Not assigned' }}<br>
+                            Domain: {{ selectedTestCase.domainMapped || 'N/A' }}
+                        </small>
+                    </div>
                 </div>
             </div>
             <div class="col-md-6">
@@ -559,8 +615,16 @@
     </div>
 
     <ng-template pTemplate="footer">
-        <button class="btn btn-secondary" (click)="closeTestCaseModal()">
+        <button class="btn btn-secondary me-2" (click)="closeTestCaseModal()">
+            <i class="fas fa-times me-1"></i>
             Close
+        </button>
+        <button class="btn btn-success" 
+                (click)="saveTestCaseInformation()" 
+                [disabled]="loading || !hasTestCaseChanges()">
+            <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
+            <i class="fas fa-save me-1" *ngIf="!loading"></i>
+            {{ loading ? 'Saving...' : 'Save Changes' }}
         </button>
     </ng-template>
 </p-dialog>
