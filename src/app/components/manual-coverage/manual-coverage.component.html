@@ -208,9 +208,14 @@
                                             </button>
                                         </div>
                                         <div class="global-search-result mt-1" *ngIf="globalSearchResult">
-                                            <small class="badge bg-info">
+                                            <small class="badge" [class]="globalSearchResult.count > 0 ? 'bg-success' : 'bg-warning'">
                                                 <i class="fas fa-search me-1"></i>
-                                                Found {{ globalSearchResult.count }} matches for "{{ globalSearchResult.keyword }}"
+                                                <span *ngIf="globalSearchResult.count > 0">
+                                                    Found {{ globalSearchResult.count }} matches for "{{ globalSearchResult.keyword }}"
+                                                </span>
+                                                <span *ngIf="globalSearchResult.count === 0">
+                                                    No matches found for "{{ globalSearchResult.keyword }}"
+                                                </span>
                                             </small>
                                         </div>
                                     </div>
@@ -493,7 +498,9 @@
           [style]="{ width: '70rem' }"
           header="Test Case Details"
           [closable]="true"
-          [dismissableMask]="false">
+          [dismissableMask]="false"
+          [closeOnEscape]="false"
+          [blockScroll]="true">
     <div *ngIf="selectedTestCase && selectedIssue">
         <div class="row">
             <div class="col-md-6">
