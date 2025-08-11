@@ -622,7 +622,7 @@ export class ManualCoverageComponent implements OnInit {
     }).subscribe(
       (automationResult) => {
         // Then save the test case information if there are changes
-        if (this.hasTestCaseChanges()) {
+        if (this.hasInfoChanges()) {
           const updateData = {
             projectId: this.selectedTestCaseProject?.id || null,
             testerId: this.selectedTestCaseTester?.id || null,
@@ -647,7 +647,14 @@ export class ManualCoverageComponent implements OnInit {
             },
             (error) => {
               console.error('Error updating test case information:', error);
+              // Even if test case info update fails, automation status was saved
+              this.updateLocalTestCase(automationResult);
               this.loading = false;
+              console.log('Test case automation status updated successfully (info update failed)');
+              
+              if (this.selectedSprint) {
+                this.loadSprintStatistics(this.selectedSprint.id);
+              }
             }
           );
         } else {
@@ -668,7 +675,8 @@ export class ManualCoverageComponent implements OnInit {
     );
   }
 
-  hasTestCaseChanges(): boolean {
+  // Helper method to check if test case information has changed
+  hasInfoChanges(): boolean {
     if (!this.selectedTestCase) {
       return false;
     }
@@ -677,14 +685,20 @@ export class ManualCoverageComponent implements OnInit {
     const currentTester = this.testers.find(t => t.id === this.selectedTestCase!.assignedTesterId);
     const currentDomain = this.domains.find(d => d.name === this.selectedTestCase!.domainMapped);
 
-    const hasInfoChanges = (
+    return (
       this.selectedTestCaseProject !== currentProject ||
       this.selectedTestCaseTester !== currentTester ||
       this.selectedTestCaseDomain !== currentDomain
     );
-    
-    // Always return true if there are any changes (info or automation status)
-    return hasInfoChanges || true; // Since we always want to be able to save automation status
+  }
+
+  hasTestCaseChanges(): boolean {
+    if (!this.selectedTestCase) {
+      return false;
+    }
+
+    // Always return true since we always want to be able to save automation status or info changes
+    return true;
   }
 
   // Modal close handlers
@@ -732,9 +746,12 @@ export class ManualCoverageComponent implements OnInit {
     this.globalSearchLoading = true;
     this.globalSearchResult = null;
     
-    this.apiService.searchKeywordInComments('GLOBAL', { keyword: this.globalSearchKeyword.trim() }).subscribe(
+    // Use the existing global keyword search endpoint
+    this.apiService.globalKeywordSearch(this.globalSearchKeyword.trim()).subscribe(
       (result) => {
-        this.globalSearchResult = { count: result.count || 0, keyword: this.globalSearchKeyword.trim() };
+        // Extract count from the response
+        const count = result.totalMatches || result.count || result.length || 0;
+        this.globalSearchResult = { count: count, keyword: this.globalSearchKeyword.trim() };
         this.globalSearchLoading = false;
         
         // Auto-hide result after 5 seconds
@@ -745,6 +762,8 @@ export class ManualCoverageComponent implements OnInit {
       (error) => {
         console.error('Global search error:', error);
         this.globalSearchLoading = false;
+        
+        // Show a message even on error
         this.globalSearchResult = { count: 0, keyword: this.globalSearchKeyword.trim() };
         
         // Auto-hide error after 3 seconds
