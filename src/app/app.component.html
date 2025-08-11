@@ -41,6 +41,34 @@
               Jenkins Results
             </a>
           </li>
+          
+          <!-- Global Search Component -->
+          <li class="nav-item dropdown">
+            <div class="nav-link global-search-container">
+              <div class="input-group global-search-group">
+                <input type="text" 
+                       class="form-control form-control-sm" 
+                       placeholder="Search across all Jira tickets..." 
+                       [(ngModel)]="globalSearchKeyword"
+                       (keyup.enter)="performGlobalSearch()"
+                       [disabled]="globalSearchLoading">
+                <button class="btn btn-outline-primary btn-sm" 
+                        type="button" 
+                        (click)="performGlobalSearch()"
+                        [disabled]="!globalSearchKeyword || globalSearchLoading">
+                  <span *ngIf="globalSearchLoading" class="spinner-border spinner-border-sm"></span>
+                  <i class="fas fa-search" *ngIf="!globalSearchLoading"></i>
+                </button>
+              </div>
+              <div class="global-search-result mt-1" *ngIf="globalSearchResult">
+                <small class="badge bg-info">
+                  <i class="fas fa-search me-1"></i>
+                  Found {{ globalSearchResult.count }} matches for "{{ globalSearchResult.keyword }}"
+                </small>
+              </div>
+            </div>
+          </li>
+          
           <div class="nav-item">
             <button class="btn btn-danger" (click)="logout()">
               <i class="fas fa-sign-out-alt"></i> Logout
