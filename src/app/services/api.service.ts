@@ -354,13 +354,13 @@ export class ApiService {
       .pipe(catchError(this.handleError));
   }
 
-  // Get global search count for a keyword
+  // Get global search count for a keyword  
   getGlobalSearchCount(keyword: string, jiraProjectKey?: string): Observable<{ count: number; keyword: string }> {
     const request = {
       keyword: keyword,
       jiraProjectKey: jiraProjectKey || ''
     };
-    return this.http.post<{ count: number; keyword: string }>(`${this.baseUrl}/manual-page/global-search-count`, request, this.httpOptions)
+    return this.http.post<{ count: number; keyword: string }>(`${this.baseUrl}/manual-page/global-keyword-search`, request, this.httpOptions)
       .pipe(catchError(this.handleError));
   }
 

@@ -188,11 +188,41 @@
 
                             <!-- Search and Filters -->
                             <div class="filter-controls">
+                                <!-- Global Search Section -->
+                                <div class="global-search-section me-3">
+                                    <div class="global-search-container">
+                                        <label class="form-label small mb-1">Global Search Across All Jira Tickets</label>
+                                        <div class="input-group global-search-group">
+                                            <input type="text" 
+                                                   class="form-control form-control-sm" 
+                                                   placeholder="Enter keyword to search all tickets..." 
+                                                   [(ngModel)]="globalSearchKeyword"
+                                                   (keyup.enter)="performGlobalSearch()"
+                                                   [disabled]="globalSearchLoading">
+                                            <button class="btn btn-outline-primary btn-sm" 
+                                                    type="button" 
+                                                    (click)="performGlobalSearch()"
+                                                    [disabled]="!globalSearchKeyword || globalSearchLoading">
+                                                <span *ngIf="globalSearchLoading" class="spinner-border spinner-border-sm"></span>
+                                                <i class="fas fa-search" *ngIf="!globalSearchLoading"></i>
+                                            </button>
+                                        </div>
+                                        <div class="global-search-result mt-1" *ngIf="globalSearchResult">
+                                            <small class="badge bg-info">
+                                                <i class="fas fa-search me-1"></i>
+                                                Found {{ globalSearchResult.count }} matches for "{{ globalSearchResult.keyword }}"
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Local Search Section -->
                                 <div class="search-box me-3">
+                                    <label class="form-label small mb-1">Filter Current Issues</label>
                                     <div class="position-relative">
                                         <input type="text"
                                                class="form-control form-control-sm"
-                                               placeholder="Search issues..."
+                                               placeholder="Search current issues..."
                                                [(ngModel)]="searchTerm">
                                         <i class="fas fa-search search-icon"></i>
                                     </div>
@@ -460,8 +490,10 @@
 <!-- Test Case Modal -->
 <p-dialog [modal]="true"
           [(visible)]="showTestCaseModal"
-          [style]="{ width: '60rem' }"
-          header="Test Case Details">
+          [style]="{ width: '70rem' }"
+          header="Test Case Details"
+          [closable]="true"
+          [dismissableMask]="false">
     <div *ngIf="selectedTestCase && selectedIssue">
         <div class="row">
             <div class="col-md-6">
@@ -564,8 +596,9 @@
                                type="radio"
                                name="automationChoice"
                                id="canAutomate"
-                               [checked]="selectedTestCase.canBeAutomated"
-                               (change)="updateTestCaseAutomationFlags(true, false)">
+                               [value]="true"
+                               [checked]="selectedTestCase.canBeAutomated === true"
+                               (change)="onAutomationStatusChange('can_automate')">
                         <label class="form-check-label text-success" for="canAutomate">
                             <i class="fas fa-check me-1"></i>
                             Can be Automated
@@ -576,8 +609,9 @@
                                type="radio"
                                name="automationChoice"
                                id="cannotAutomate"
-                               [checked]="selectedTestCase.cannotBeAutomated"
-                               (change)="updateTestCaseAutomationFlags(false, true)">
+                               [value]="true"
+                               [checked]="selectedTestCase.cannotBeAutomated === true"
+                               (change)="onAutomationStatusChange('cannot_automate')">
                         <label class="form-check-label text-danger" for="cannotAutomate">
                             <i class="fas fa-times me-1"></i>
                             Cannot be Automated
@@ -588,27 +622,14 @@
                                type="radio"
                                name="automationChoice"
                                id="pending"
+                               [value]="true"
                                [checked]="!selectedTestCase.canBeAutomated && !selectedTestCase.cannotBeAutomated"
-                               (change)="updateTestCaseAutomationFlags(false, false)">
+                               (change)="onAutomationStatusChange('pending')">
                         <label class="form-check-label text-warning" for="pending">
                             <i class="fas fa-clock me-1"></i>
                             Pending Assessment
                         </label>
                     </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="row mt-3" *ngIf="selectedTestCase.canBeAutomated">
-            <div class="col-12">
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle me-2"></i>
-                    This test case is marked as automatable.
-                    <button class="btn btn-sm btn-primary ms-2"
-                            (click)="openMappingModal(selectedTestCase)">
-                        <i class="fas fa-link me-1"></i>
-                        Map to Project & Tester
-                    </button>
                 </div>
             </div>
         </div>
@@ -629,72 +650,7 @@
     </ng-template>
 </p-dialog>
 
-<!-- Mapping Modal -->
-<p-dialog [modal]="true"
-          [(visible)]="showMappingModal"
-          [style]="{ width: '50rem' }"
-          header="Map Test Case">
-    <div *ngIf="selectedTestCase">
-        <div class="row">
-            <div class="col-12 mb-3">
-                <h6 class="text-primary">Test Case: {{ selectedTestCase.qtestTitle }}</h6>
-            </div>
-        </div>
 
-        <div class="row">
-            <div class="col-md-6">
-                <div class="mb-3">
-                    <label for="projectSelect" class="form-label">Select Project</label>
-                    <select class="form-select"
-                            id="projectSelect"
-                            [(ngModel)]="selectedProject">
-                        <option [ngValue]="null">Choose a project...</option>
-                        <option *ngFor="let project of projects" [ngValue]="project">
-                            {{ project.name }} ({{ project.domain?.name }})
-                        </option>
-                    </select>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="mb-3">
-                    <label for="testerSelect" class="form-label">Select Tester</label>
-                    <select class="form-select"
-                            id="testerSelect"
-                            [(ngModel)]="selectedTester">
-                        <option [ngValue]="null">Choose a tester...</option>
-                        <option *ngFor="let tester of testers" [ngValue]="tester">
-                            {{ tester.name }} ({{ tester.role }})
-                        </option>
-                    </select>
-                </div>
-            </div>
-        </div>
-
-        <div class="row" *ngIf="selectedProject">
-            <div class="col-12">
-                <div class="alert alert-light">
-                    <h6>Project Details:</h6>
-                    <p class="mb-1"><strong>Name:</strong> {{ selectedProject.name }}</p>
-                    <p class="mb-1"><strong>Description:</strong> {{ selectedProject.description }}</p>
-                    <p class="mb-0"><strong>Domain:</strong> {{ selectedProject.domain?.name }}</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <ng-template pTemplate="footer">
-        <button class="btn btn-secondary me-2" (click)="closeMappingModal()">
-            Cancel
-        </button>
-        <button class="btn btn-primary"
-                (click)="mapTestCase()"
-                [disabled]="!selectedProject || !selectedTester || loading">
-            <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
-            <i class="fas fa-link me-2" *ngIf="!loading"></i>
-            {{ loading ? 'Mapping...' : 'Map Test Case' }}
-        </button>
-    </ng-template>
-</p-dialog>
 
 <!-- Keyword Search Modal -->
 <p-dialog [modal]="true"
