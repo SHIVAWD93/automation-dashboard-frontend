@@ -1,4 +1,18 @@
 <div class="jenkins-results-container">
+    <!-- Success Toast Message -->
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1050;">
+        <div class="toast show" [class.d-none]="!showSuccessMessage" role="alert">
+            <div class="toast-header bg-success text-white">
+                <i class="fas fa-check-circle me-2"></i>
+                <strong class="me-auto">Success</strong>
+                <button type="button" class="btn-close btn-close-white" (click)="showSuccessMessage = false"></button>
+            </div>
+            <div class="toast-body">
+                {{ successMessage }}
+            </div>
+        </div>
+    </div>
+
     <!-- Header Section -->
     <div class="row">
         <div class="col-12">
@@ -15,20 +29,11 @@
                     </div>
                     <div class="header-controls">
                         <div class="connection-status me-3">
-              <span class="badge" [class]="connectionStatus ? 'bg-success' : 'bg-danger'">
-                <i class="fas" [class.fa-check-circle]="connectionStatus" [class.fa-exclamation-triangle]="!connectionStatus"></i>
-                {{ connectionStatus ? 'Connected' : 'Disconnected' }}
-              </span>
+                            <span class="badge" [class]="connectionStatus ? 'bg-success' : 'bg-danger'">
+                                <i class="fas" [class.fa-check-circle]="connectionStatus" [class.fa-exclamation-triangle]="!connectionStatus"></i>
+                                {{ connectionStatus ? 'Connected' : 'Disconnected' }}
+                            </span>
                         </div>
-<!--                        <button-->
-<!--                                class="btn btn-success me-2"-->
-<!--                                (click)="generateTestNGReport()"-->
-<!--                                [disabled]="generating || !connectionStatus"-->
-<!--                        >-->
-<!--                            <span *ngIf="generating" class="spinner-border spinner-border-sm me-2"></span>-->
-<!--                            <i class="fas fa-file-alt me-2" *ngIf="!generating"></i>-->
-<!--                            {{ generating ? 'Generating...' : 'Generate TestNG Report' }}-->
-<!--                        </button>-->
                         <button
                                 class="btn btn-primary me-2"
                                 (click)="syncAllJobs()"
@@ -106,6 +111,74 @@
         </div>
     </div>
 
+    <!-- NEW: Enhanced Filter Section -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card filter-card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-filter me-2"></i>
+                        Advanced Filters
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Project</label>
+                            <select
+                                    class="form-select"
+                                    [(ngModel)]="selectedProjectId"
+                                    (change)="onProjectFilterChange()"
+                            >
+                                <option [ngValue]="null">All Projects</option>
+                                <option *ngFor="let project of projects" [ngValue]="project.id">
+                                    {{ project.name }}
+                                </option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Automation Tester</label>
+                            <select
+                                    class="form-select"
+                                    [(ngModel)]="selectedAutomationTesterId"
+                                    (change)="onAutomationTesterFilterChange()"
+                            >
+                                <option [ngValue]="null">All Testers</option>
+                                <option *ngFor="let tester of automationTesters" [ngValue]="tester.id">
+                                    {{ tester.name }}
+                                </option>
+                            </select>
+                        </div>
+<!--                        <div class="col-md-3">-->
+<!--                            <label class="form-label">Job Frequency</label>-->
+<!--                            <select-->
+<!--                                    class="form-select"-->
+<!--                                    [(ngModel)]="selectedJobFrequency"-->
+<!--                                    (change)="onJobFrequencyFilterChange()"-->
+<!--                            >-->
+<!--                                <option *ngFor="let freq of jobFrequencyOptions" [value]="freq.value">-->
+<!--                                    {{ freq.label }}-->
+<!--                                </option>-->
+<!--                            </select>-->
+<!--                        </div>-->
+                        <div class="col-md-3">
+                            <label class="form-label">Pass Threshold %</label>
+                            <input
+                                    type="number"
+                                    class="form-control"
+                                    placeholder="Min pass %"
+                                    [(ngModel)]="passPercentageThreshold"
+                                    (input)="applyFilters()"
+                                    min="0"
+                                    max="100"
+                            >
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Main Content -->
     <div class="row mt-4">
         <!-- Jobs Table -->
@@ -139,15 +212,6 @@
                                     {{ status.label }}
                                 </option>
                             </select>
-                            <!-- Threshold input in header filter section -->
-                            <input
-                                    type="number"
-                                    class="form-control form-control-sm ms-2"
-                                    style="width:100px"
-                                    placeholder="Threshold %"
-                                    [(ngModel)]="passPercentageThreshold"
-                                    (input)="applyFilters()"
-                            >
                         </div>
                     </div>
                 </div>
@@ -165,6 +229,11 @@
                                 Status <i [class]="getSortIcon('buildStatus')"></i>
                             </th>
                             <th class="text-center">Tests</th>
+                            <th class="text-center">Pass %</th>
+                            <!-- NEW: Project column -->
+                            <th>Project</th>
+                            <!-- NEW: Job Frequency column -->
+                            <th>Schedule</th>
                             <th (click)="sortTable('buildTimestamp')" [class.sorted]="isSorted('buildTimestamp')" class="sortable">
                                 Build Time <i [class]="getSortIcon('buildTimestamp')"></i>
                             </th>
@@ -187,22 +256,45 @@
                                 </a>
                             </td>
                             <td>
-                  <span class="badge" [class]="getBuildStatusColor(result.buildStatus)">
-                    {{ result.buildStatus }}
-                  </span>
+                                <span class="badge" [class]="getBuildStatusColor(result.buildStatus)">
+                                    {{ result.buildStatus }}
+                                </span>
                             </td>
                             <td class="text-center">
                                 <div class="test-summary">
-                    <span class="badge bg-success me-1" *ngIf="result.passedTests">
-                      ✓ {{ result.passedTests }}
-                    </span>
+                                    <span class="badge bg-success me-1" *ngIf="result.passedTests">
+                                        ✓ {{ result.passedTests }}
+                                    </span>
                                     <span class="badge bg-danger me-1" *ngIf="result.failedTests">
-                      ✗ {{ result.failedTests }}
-                    </span>
+                                        ✗ {{ result.failedTests }}
+                                    </span>
                                     <span class="badge bg-warning" *ngIf="result.skippedTests">
-                      ⊘ {{ result.skippedTests }}
-                    </span>
+                                        ⊘ {{ result.skippedTests }}
+                                    </span>
                                 </div>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge" [ngClass]="{
+                                    'bg-success': getPassPercentage(result) >= 80,
+                                    'bg-warning': getPassPercentage(result) < 80 && getPassPercentage(result) >= 50,
+                                    'bg-danger': getPassPercentage(result) < 50
+                                }">
+                                    {{ getPassPercentage(result) }}%
+                                </span>
+                            </td>
+                            <!-- NEW: Project display -->
+                            <td>
+                                <small class="text-muted">
+                                    <i class="fas fa-project-diagram me-1"></i>
+                                    {{ getProjectName(result) }}
+                                </small>
+                            </td>
+                            <!-- NEW: Job frequency display -->
+                            <td>
+                                <span class="badge bg-secondary">
+                                    <i class="fas fa-clock me-1"></i>
+                                    {{ getJobFrequencyDisplay(result) }}
+                                </span>
                             </td>
                             <td>
                                 <small>{{ result.buildTimestamp | date:'short' }}</small>
@@ -221,13 +313,6 @@
                                         title="Sync this job"
                                 >
                                     <i class="fas fa-sync-alt"></i>
-                                </button>
-                                <button
-                                        class="btn btn-outline-success btn-sm ms-1"
-                                        (click)="assignTesters(result)"
-                                        *ngIf="automationTesterSelection[result.id] || manualTesterSelection[result.id]"
-                                >
-                                  <i class="fas fa-save"></i>
                                 </button>
                             </td>
                         </tr>
@@ -281,7 +366,159 @@
         </div>
     </div>
 
-    <!-- Test Cases Detail Section -->
+    <!-- ENHANCED: Project, Testers, and Notes Section with Single Save Button -->
+    <div class="row mt-4" *ngIf="selectedJob">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-cogs me-2"></i>
+                                Job Configuration - {{ selectedJob.jobName }} (Build #{{ selectedJob.buildNumber }})
+                            </h5>
+                        </div>
+                        <!-- ENHANCED: Single Save Button -->
+                        <button
+                                class="btn btn-success"
+                                (click)="saveAllData()"
+                                [disabled]="saveButtonDisabled || isSaving"
+                        >
+                            <span *ngIf="isSaving" class="spinner-border spinner-border-sm me-2"></span>
+                            <i class="fas fa-save me-1" *ngIf="!isSaving"></i>
+                            {{ isSaving ? 'Saving...' : 'Save All Changes' }}
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Project, Testers, and Metrics in one row -->
+                    <div class="row g-3 mb-4">
+                        <!-- Project Assignment -->
+                        <div class="col-md-3">
+                            <label class="form-label">
+                                <i class="fas fa-project-diagram me-1"></i>
+                                Project Assignment
+                            </label>
+                            <div *ngIf="selectedJob.project && !projectSelection[selectedJob.id]; else projectSel">
+                                <div class="alert alert-info mb-0 py-2">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    {{ displayProject(selectedJob.project) }}
+                                </div>
+                            </div>
+                            <ng-template #projectSel>
+                                <select
+                                        class="form-select"
+                                        [(ngModel)]="projectSelection[selectedJob.id]"
+                                        (change)="onProjectSelectionChange()"
+                                >
+                                    <option [ngValue]="null">Select Project</option>
+                                    <option *ngFor="let project of projects" [ngValue]="project.id">
+                                        {{ project.name }}
+                                    </option>
+                                </select>
+                            </ng-template>
+                        </div>
+
+                        <!-- Automation Tester -->
+                        <div class="col-md-3">
+                            <label class="form-label">
+                                <i class="fas fa-robot me-1"></i>
+                                Automation Tester
+                            </label>
+                            <div *ngIf="selectedJob.automationTester && !automationTesterSelection[selectedJob.id]; else autoSel">
+                                <div class="alert alert-success mb-0 py-2">
+                                    <i class="fas fa-user-check me-1"></i>
+                                    {{ displayTester(selectedJob.automationTester) }}
+                                </div>
+                            </div>
+                            <ng-template #autoSel>
+                                <select
+                                        class="form-select"
+                                        [(ngModel)]="automationTesterSelection[selectedJob.id]"
+                                        (change)="onTesterSelectionChange()"
+                                >
+                                    <option [ngValue]="null">Select Automation Tester</option>
+                                    <option *ngFor="let tester of testers" [ngValue]="tester.id">
+                                        {{ tester.name }}
+                                    </option>
+                                </select>
+                            </ng-template>
+                        </div>
+
+                        <!-- Manual Tester -->
+                        <div class="col-md-3">
+                            <label class="form-label">
+                                <i class="fas fa-user me-1"></i>
+                                Manual Tester
+                            </label>
+                            <div *ngIf="selectedJob.manualTester && !manualTesterSelection[selectedJob.id]; else manualSel">
+                                <div class="alert alert-warning mb-0 py-2">
+                                    <i class="fas fa-user-check me-1"></i>
+                                    {{ displayTester(selectedJob.manualTester) }}
+                                </div>
+                            </div>
+                            <ng-template #manualSel>
+                                <select
+                                        class="form-select"
+                                        [(ngModel)]="manualTesterSelection[selectedJob.id]"
+                                        (change)="onTesterSelectionChange()"
+                                >
+                                    <option [ngValue]="null">Select Manual Tester</option>
+                                    <option *ngFor="let tester of testers" [ngValue]="tester.id">
+                                        {{ tester.name }}
+                                    </option>
+                                </select>
+                            </ng-template>
+                        </div>
+
+                        <!-- Pass Percentage & Job Schedule -->
+                        <div class="col-md-3">
+                            <label class="form-label">
+                                <i class="fas fa-chart-line me-1"></i>
+                                Metrics & Schedule
+                            </label>
+                            <div class="d-flex flex-column gap-2">
+                                <span class="badge fs-6" [ngClass]="{
+                                    'bg-success': getPassPercentage(selectedJob) >= 80,
+                                    'bg-warning': getPassPercentage(selectedJob) < 80 && getPassPercentage(selectedJob) >= 50,
+                                    'bg-danger': getPassPercentage(selectedJob) < 50
+                                }">
+                                    Pass Rate: {{ getPassPercentage(selectedJob) }}%
+                                </span>
+                                <span class="badge bg-secondary fs-6">
+                                    <i class="fas fa-clock me-1"></i>
+                                    Schedule: {{ getJobFrequencyDisplay(selectedJob) }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notes Section -->
+                    <div class="row">
+                        <div class="col-12">
+                            <label class="form-label">
+                                <i class="fas fa-bug me-1"></i>
+                                Bugs Identified / Failure Reasons
+                            </label>
+                            <textarea
+                                    class="form-control"
+                                    rows="3"
+                                    [(ngModel)]="jobNotes"
+                                    (input)="onNotesChange()"
+                                    placeholder="Enter details about bugs identified, failure reasons, or any observations about this build..."
+                            ></textarea>
+                            <small class="form-text text-muted mt-1">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Describe any bugs found, failure reasons, or insights to help with debugging and future test runs.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Test Cases Detail Section with Stack Trace Enhancement -->
     <div class="row mt-4" *ngIf="selectedJob">
         <div class="col-12">
             <div class="card">
@@ -340,6 +577,8 @@
                             <th (click)="sortTestCases('duration')" [class.sorted]="isTestCaseSorted('duration')" class="sortable">
                                 Duration <i [class]="getTestCaseSortIcon('duration')"></i>
                             </th>
+                            <!-- ENHANCEMENT: New column for failure reason -->
+                            <th class="text-center">Failure Details</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -357,6 +596,32 @@
                             <td>
                                 <span class="badge bg-light text-dark">{{ formatDuration(testCase.duration) }}</span>
                             </td>
+                            <!-- ENHANCEMENT: Stack trace and failure reason display -->
+                            <td class="text-center">
+                                <div *ngIf="testCase.status === 'FAILED'">
+                                    <!-- Show failure reason -->
+                                    <div class="mb-1">
+                                        <small class="text-danger">
+                                            {{ getFailureReason(testCase) }}
+                                        </small>
+                                    </div>
+                                    <!-- Stack trace button with hover tooltip -->
+                                    <button
+                                            *ngIf="hasStackTrace(testCase)"
+                                            class="btn btn-outline-danger btn-sm"
+                                            [title]="getTruncatedStackTrace(testCase)"
+                                            data-bs-toggle="tooltip"
+                                            data-bs-placement="left"
+                                            data-bs-html="true"
+                                    >
+                                        <i class="fas fa-bug"></i> Stack Trace
+                                    </button>
+                                    <small *ngIf="!hasStackTrace(testCase)" class="text-muted">
+                                        No stack trace available
+                                    </small>
+                                </div>
+                                <span *ngIf="testCase.status !== 'FAILED'" class="text-muted">-</span>
+                            </td>
                         </tr>
                         </tbody>
                     </table>
@@ -370,75 +635,6 @@
                             </p>
                         </div>
                     </ng-template>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Add new table headers -->
-    <div class="row mt-4" *ngIf="selectedJob">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h5 class="card-title mb-0">
-                                <i class="fas fa-user-tie me-2"></i>
-                                Testers - {{ selectedJob.jobName }} (Build #{{ selectedJob.buildNumber }})
-                            </h5>
-                        </div>
-                    </div>
-                </div>
-                <div class="table-scrollable">
-                    <table class="table table-sm mb-0">
-                        <thead>
-                        <tr>
-                            <th>Automation Tester</th>
-                            <th>Manual Tester</th>
-                            <th>Pass %</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr>
-                            <td>
-                                <div *ngIf="selectedJob.automationTester; else autoSel">{{ displayTester(selectedJob.automationTester) }}</div>
-                                <ng-template #autoSel>
-                                  <select class="form-select form-select-sm" [(ngModel)]="automationTesterSelection[selectedJob.id]">
-                                     <option [ngValue]="null">Select</option>
-                                     <option *ngFor="let tester of testers" [ngValue]="tester.id">{{ tester.name }}</option>
-                                  </select>
-                                </ng-template>
-                            </td>
-                            <td>
-                                <div *ngIf="selectedJob.manualTester; else manualSel">{{ displayTester(selectedJob.manualTester) }}</div>
-                                <ng-template #manualSel>
-                                  <select class="form-select form-select-sm" [(ngModel)]="manualTesterSelection[selectedJob.id]">
-                                     <option [ngValue]="null">Select</option>
-                                     <option *ngFor="let tester of testers" [ngValue]="tester.id">{{ tester.name }}</option>
-                                  </select>
-                                </ng-template>
-                            </td>
-                            <td>
-                                <span class="badge" [ngClass]="{'bg-success': getPassPercentage(selectedJob) >= 80, 'bg-warning': getPassPercentage(selectedJob) < 80 && getPassPercentage(selectedJob) >= 50, 'bg-danger': getPassPercentage(selectedJob) < 50}">
-                                   {{ getPassPercentage(selectedJob) }}%
-                                </span>
-                            </td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Add Notes textarea in selected job detail section above test cases -->
-    <div class="row mt-4" *ngIf="selectedJob">
-        <div class="col-12">
-            <div class="card mb-3">
-                <div class="card-body">
-                    <h6 class="card-title mb-2"><i class="fas fa-bug me-2"></i>Bugs Identified / Failure Reasons</h6>
-                    <textarea class="form-control" rows="3" [(ngModel)]="jobNotes" placeholder="Enter details..."></textarea>
-                    <button class="btn btn-success btn-sm mt-2" (click)="saveJobNotes()"><i class="fas fa-save me-1"></i>Save</button>
                 </div>
             </div>
         </div>
@@ -570,3 +766,136 @@
         </div>
     </div>
 </div>
+
+<!-- Additional CSS for enhanced features -->
+<style>
+    .toast-container .toast {
+        min-width: 300px;
+    }
+
+    .test-cases-table .btn-outline-danger:hover {
+        background-color: #dc3545;
+        border-color: #dc3545;
+        color: white;
+    }
+
+    .tooltip {
+        z-index: 1070;
+    }
+
+    .tooltip-inner {
+        max-width: 400px;
+        text-align: left;
+        font-size: 0.875rem;
+        background-color: #343a40;
+    }
+
+    .save-button-container {
+        position: sticky;
+        top: 0;
+        z-index: 1020;
+        background: white;
+        padding: 10px;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #80bdff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+
+    .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .table-active {
+        background-color: rgba(0, 123, 255, 0.1) !important;
+    }
+
+    /* Stack trace button styling */
+    .btn-outline-danger.btn-sm {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+    }
+
+    /* Enhanced tooltip styling for stack traces */
+    [data-bs-toggle="tooltip"] {
+        cursor: help;
+    }
+
+    /* Success message styling */
+    .toast.show {
+        opacity: 1;
+        animation: slideInRight 0.3s ease-in-out;
+    }
+
+    @keyframes slideInRight {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    /* Enhanced pass percentage badges */
+    .badge.bg-success {
+        background-color: #28a745 !important;
+    }
+
+    .badge.bg-warning {
+        background-color: #ffc107 !important;
+        color: #212529 !important;
+    }
+
+    .badge.bg-danger {
+        background-color: #dc3545 !important;
+    }
+
+    /* Improved form controls */
+    .form-select, .form-control {
+        transition: all 0.15s ease-in-out;
+    }
+
+    .form-select:hover, .form-control:hover {
+        border-color: #adb5bd;
+    }
+
+    /* Save button enhancement */
+    .btn-success:disabled {
+        background-color: #6c757d;
+        border-color: #6c757d;
+    }
+
+    .btn-success:not(:disabled):hover {
+        background-color: #218838;
+        border-color: #1e7e34;
+    }
+
+    /* Test case failure details */
+    .text-danger {
+        font-weight: 500;
+    }
+
+    /* Responsive improvements */
+    @media (max-width: 768px) {
+        .filter-controls {
+            flex-direction: column;
+            gap: 10px !important;
+        }
+
+        .header-controls {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 10px;
+        }
+
+        .test-case-controls {
+            flex-direction: column;
+            gap: 10px !important;
+        }
+    }
+</style>

@@ -1,8 +1,9 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ApiService } from '../../services/api.service';
-import { JenkinsResult, JenkinsTestCase, JenkinsStatistics } from '../../models/jenkins.model';
+import { JenkinsResult, JenkinsTestCase, JenkinsStatistics, JenkinsFilters } from '../../models/jenkins.model';
 import { Chart, registerables } from 'chart.js';
 import { Tester } from '../../models/tester.model';
+import { Project } from '../../models/project.model';
 
 Chart.register(...registerables);
 
@@ -66,11 +67,45 @@ export class JenkinsResultsComponent implements OnInit, OnDestroy {
     { value: 'SKIPPED', label: 'Skipped' }
   ];
 
+  // NEW: Enhanced filtering properties
   testers: Tester[] = [];
+  projects: Project[] = [];
+  jobFrequencies: string[] = [];
+  automationTesters: Tester[] = [];
+
+  // Filter state
+  selectedProjectId: number | null = null;
+  selectedAutomationTesterId: number | null = null;
+  selectedJobFrequency = '';
   passPercentageThreshold: number = 0;
+
+  // Selection state for testers and projects
   automationTesterSelection: { [key: number]: number | null } = {};
   manualTesterSelection: { [key: number]: number | null } = {};
+  projectSelection: { [key: number]: number | null } = {};
   jobNotes: string = '';
+
+  // UI state management for save functionality
+  isSaving = false;
+  saveButtonDisabled = true;
+  originalNotes = '';
+  originalAutomationTester: number | null = null;
+  originalManualTester: number | null = null;
+  originalProject: number | null = null;
+  showSuccessMessage = false;
+  successMessage = '';
+
+  // NEW: Job frequency options
+  jobFrequencyOptions = [
+    { value: '', label: 'All Frequencies' },
+    { value: 'Hourly', label: 'Hourly' },
+    { value: 'Daily', label: 'Daily' },
+    { value: 'Weekly', label: 'Weekly' },
+    { value: 'Monthly', label: 'Monthly' },
+    { value: 'On Demand', label: 'On Demand' },
+    { value: 'Continuous', label: 'Continuous' },
+    { value: 'Unknown', label: 'Unknown' }
+  ];
 
   constructor(private apiService: ApiService) {}
 
@@ -78,6 +113,9 @@ export class JenkinsResultsComponent implements OnInit, OnDestroy {
     this.loadJenkinsData();
     this.testConnection();
     this.loadTesters();
+    this.loadProjects();
+    this.loadJobFrequencies();
+    this.loadAutomationTesters();
   }
 
   ngOnDestroy(): void {
@@ -101,19 +139,43 @@ export class JenkinsResultsComponent implements OnInit, OnDestroy {
 
   loadJenkinsResults(): Promise<void> {
     return new Promise((resolve, reject) => {
-      this.apiService.getJenkinsResults().subscribe(
-        (data: JenkinsResult[]) => {
-          this.jenkinsResults = data || [];
-          this.applyFilters();
-          resolve();
-        },
-        (error) => {
-          console.error('Error loading Jenkins results:', error);
-          this.jenkinsResults = [];
-          this.applyFilters();
-          reject(error);
-        }
-      );
+      // Use filtered results if filters are applied
+      const hasFilters = this.selectedProjectId || this.selectedAutomationTesterId || this.selectedJobFrequency || this.selectedStatus;
+
+      if (hasFilters) {
+        this.apiService.getFilteredJenkinsResults({
+          projectId: this.selectedProjectId || undefined,
+          automationTesterId: this.selectedAutomationTesterId || undefined,
+          jobFrequency: this.selectedJobFrequency || undefined,
+          buildStatus: this.selectedStatus || undefined
+        }).subscribe(
+          (data: JenkinsResult[]) => {
+            this.jenkinsResults = data || [];
+            this.applyFilters();
+            resolve();
+          },
+          (error) => {
+            console.error('Error loading filtered Jenkins results:', error);
+            this.jenkinsResults = [];
+            this.applyFilters();
+            reject(error);
+          }
+        );
+      } else {
+        this.apiService.getJenkinsResults().subscribe(
+          (data: JenkinsResult[]) => {
+            this.jenkinsResults = data || [];
+            this.applyFilters();
+            resolve();
+          },
+          (error) => {
+            console.error('Error loading Jenkins results:', error);
+            this.jenkinsResults = [];
+            this.applyFilters();
+            reject(error);
+          }
+        );
+      }
     });
   }
 
@@ -130,6 +192,34 @@ export class JenkinsResultsComponent implements OnInit, OnDestroy {
         }
       );
     });
+  }
+
+  // NEW: Load filter data
+  loadProjects(): void {
+    this.apiService.getProjects().subscribe(
+      (data: Project[]) => {
+        this.projects = data || [];
+      },
+      (error) => console.error('Error loading projects with Jenkins results:', error)
+    );
+  }
+
+  loadJobFrequencies(): void {
+    this.apiService.getJobFrequencies().subscribe(
+      (data: string[]) => {
+        this.jobFrequencies = data || [];
+      },
+      (error) => console.error('Error loading job frequencies:', error)
+    );
+  }
+
+  loadAutomationTesters(): void {
+    this.apiService.getAutomationTestersWithJenkinsResults().subscribe(
+      (data: Tester[]) => {
+        this.automationTesters = data || [];
+      },
+      (error) => console.error('Error loading automation testers:', error)
+    );
   }
 
   testConnection(): void {
@@ -166,7 +256,7 @@ export class JenkinsResultsComponent implements OnInit, OnDestroy {
         console.log('Report generated successfully:', response.message);
         this.testngReport = response.report;
         this.showReport = true;
-        this.loadJenkinsData(); // Refresh the data
+        this.loadJenkinsData();
         this.generating = false;
       },
       (error) => {
@@ -207,19 +297,188 @@ export class JenkinsResultsComponent implements OnInit, OnDestroy {
     return Math.round((result.passedTests / result.totalTests) * 100);
   }
 
+  // Helper method to safely get tester ID
+  private getTesterIdSafely(tester: Tester | number | null | undefined): number | null {
+    if (!tester) {
+      return null;
+    }
+    if (typeof tester === 'number') {
+      return tester;
+    }
+    return tester.id;
+  }
+
+  // Helper method to safely get project ID
+  private getProjectIdSafely(project: Project | number | null | undefined): number | null {
+    if (!project) {
+      return null;
+    }
+    if (typeof project === 'number') {
+      return project;
+    }
+    return project.id;
+  }
+
   selectJob(job: JenkinsResult): void {
     this.selectedJob = job;
     this.jobNotes = (job.bugsIdentified || '') as string;
+    this.originalNotes = this.jobNotes;
+
+    // Set original values for change detection
+    this.originalAutomationTester = this.getTesterIdSafely(job.automationTester);
+    this.originalManualTester = this.getTesterIdSafely(job.manualTester);
+    this.originalProject = this.getProjectIdSafely(job.project);
+
+    // Set current selections
+    this.automationTesterSelection[job.id] = this.originalAutomationTester;
+    this.manualTesterSelection[job.id] = this.originalManualTester;
+    this.projectSelection[job.id] = this.originalProject;
+
+    this.checkSaveButtonState();
     this.loadJobTestCases(job.id);
   }
 
+  // Check if save button should be enabled
+  checkSaveButtonState(): void {
+    if (!this.selectedJob) {
+      this.saveButtonDisabled = true;
+      return;
+    }
+
+    const notesChanged = this.jobNotes !== this.originalNotes;
+    const automationTesterChanged = this.automationTesterSelection[this.selectedJob.id] !== this.originalAutomationTester;
+    const manualTesterChanged = this.manualTesterSelection[this.selectedJob.id] !== this.originalManualTester;
+    const projectChanged = this.projectSelection[this.selectedJob.id] !== this.originalProject;
+
+    const hasNotes = this.jobNotes && this.jobNotes.trim().length > 0;
+    const hasAutomationTester = this.automationTesterSelection[this.selectedJob.id] !== null;
+    const hasManualTester = this.manualTesterSelection[this.selectedJob.id] !== null;
+    const hasProject = this.projectSelection[this.selectedJob.id] !== null;
+
+    // Enable save button if something has changed AND at least one field has a value
+    this.saveButtonDisabled = !(
+      (notesChanged || automationTesterChanged || manualTesterChanged || projectChanged) &&
+      (hasNotes || hasAutomationTester || hasManualTester || hasProject)
+    );
+  }
+
+  // Combined save functionality
+  saveAllData(): void {
+    if (!this.selectedJob || this.isSaving) {
+      return;
+    }
+
+    this.isSaving = true;
+
+    const requestData = {
+      notes: this.jobNotes,
+      automationTesterId: this.automationTesterSelection[this.selectedJob.id],
+      manualTesterId: this.manualTesterSelection[this.selectedJob.id],
+      projectId: this.projectSelection[this.selectedJob.id]
+    };
+
+    this.apiService.saveJenkinsJobData(this.selectedJob.id, requestData).subscribe(
+      (response) => {
+        console.log('Data saved successfully:', response);
+
+        // Update the selected job with the new data
+        if (this.selectedJob) {
+          this.selectedJob.bugsIdentified = this.jobNotes;
+
+          if (requestData.automationTesterId) {
+            const tester = this.testers.find(t => t.id === requestData.automationTesterId);
+            if (tester) {
+              this.selectedJob.automationTester = tester;
+            }
+          }
+
+          if (requestData.manualTesterId) {
+            const tester = this.testers.find(t => t.id === requestData.manualTesterId);
+            if (tester) {
+              this.selectedJob.manualTester = tester;
+            }
+          }
+
+          if (requestData.projectId) {
+            const project = this.projects.find(p => p.id === requestData.projectId);
+            if (project) {
+              this.selectedJob.project = project;
+            }
+          }
+
+          // Update pass percentage if provided in response
+          if (response.passPercentage !== undefined) {
+            this.selectedJob.passPercentage = response.passPercentage;
+          }
+        }
+
+        // Update original values
+        this.originalNotes = this.jobNotes;
+        this.originalAutomationTester = requestData.automationTesterId;
+        this.originalManualTester = requestData.manualTesterId;
+        this.originalProject = requestData.projectId;
+
+        // Show success message
+        this.showSuccessToast('Data saved successfully!');
+
+        // Update button state
+        this.checkSaveButtonState();
+        this.isSaving = false;
+      },
+      (error) => {
+        console.error('Error saving data:', error);
+        this.showSuccessToast('Failed to save data. Please try again.', true);
+        this.isSaving = false;
+      }
+    );
+  }
+
+  // Show success/error toast message
+  showSuccessToast(message: string, isError: boolean = false): void {
+    this.successMessage = message;
+    this.showSuccessMessage = true;
+
+    // Auto-hide after 3 seconds
+    setTimeout(() => {
+      this.showSuccessMessage = false;
+    }, 3000);
+  }
+
+  // Event handlers for input changes
+  onNotesChange(): void {
+    this.checkSaveButtonState();
+  }
+
+  onTesterSelectionChange(): void {
+    this.checkSaveButtonState();
+  }
+
+  onProjectSelectionChange(): void {
+    this.checkSaveButtonState();
+  }
+
+  // NEW: Filter change handlers
+  onFilterChange(): void {
+    this.loadJenkinsResults();
+  }
+
+  onProjectFilterChange(): void {
+    this.onFilterChange();
+  }
+
+  onAutomationTesterFilterChange(): void {
+    this.onFilterChange();
+  }
+
+  onJobFrequencyFilterChange(): void {
+    this.onFilterChange();
+  }
+
   loadJobTestCases(resultId: number): void {
-    // First try to load from database
     this.apiService.getJenkinsTestCases(resultId).subscribe(
       (testCases: JenkinsTestCase[]) => {
         this.selectedJobTestCases = testCases || [];
 
-        // If no test cases in database, try to fetch detailed TestNG results
         if (this.selectedJobTestCases.length === 0 && this.selectedJob) {
           this.loadDetailedTestNGResults(this.selectedJob.jobName, this.selectedJob.buildNumber);
         } else {
@@ -229,7 +488,6 @@ export class JenkinsResultsComponent implements OnInit, OnDestroy {
       },
       (error) => {
         console.error('Error loading test cases:', error);
-        // Try to fetch detailed TestNG results as fallback
         if (this.selectedJob) {
           this.loadDetailedTestNGResults(this.selectedJob.jobName, this.selectedJob.buildNumber);
         }
@@ -241,7 +499,6 @@ export class JenkinsResultsComponent implements OnInit, OnDestroy {
     this.apiService.getDetailedJenkinsTestCases(jobName, buildNumber).subscribe(
       (response: any) => {
         if (response.testCases) {
-          // Convert TestNG results to JenkinsTestCase format
           this.selectedJobTestCases = response.testCases.map((tc: any) => ({
             id: 0,
             testName: tc.testName,
@@ -253,7 +510,6 @@ export class JenkinsResultsComponent implements OnInit, OnDestroy {
             createdAt: new Date()
           }));
 
-          // Update the selected job with correct counts
           if (this.selectedJob) {
             this.selectedJob.passedTests = response.passedCount || 0;
             this.selectedJob.failedTests = response.failedCount || 0;
@@ -291,6 +547,30 @@ export class JenkinsResultsComponent implements OnInit, OnDestroy {
     }
   }
 
+  // Get failure reason or placeholder text
+  getFailureReason(testCase: JenkinsTestCase): string {
+    if (testCase.status === 'FAILED') {
+      if (testCase.errorMessage && testCase.errorMessage.trim()) {
+        return testCase.errorMessage;
+      }
+      return 'Need to identify the failed reason';
+    }
+    return '';
+  }
+
+  // Check if test case has stack trace
+  hasStackTrace(testCase: JenkinsTestCase): boolean {
+    return !!(testCase.stackTrace && testCase.stackTrace.trim());
+  }
+
+  // Get truncated stack trace for display
+  getTruncatedStackTrace(testCase: JenkinsTestCase): string {
+    if (!testCase.stackTrace) return '';
+    return testCase.stackTrace.length > 200
+      ? testCase.stackTrace.substring(0, 200) + '...'
+      : testCase.stackTrace;
+  }
+
   onSearchChange(): void {
     this.applyFilters();
   }
@@ -310,12 +590,10 @@ export class JenkinsResultsComponent implements OnInit, OnDestroy {
   applyFilters(): void {
     let filtered = this.jenkinsResults;
 
-    // Apply status filter
     if (this.selectedStatus) {
       filtered = filtered.filter(result => result.buildStatus === this.selectedStatus);
     }
 
-    // Apply search filter
     if (this.searchTerm.trim()) {
       const searchLower = this.searchTerm.toLowerCase();
       filtered = filtered.filter(result =>
@@ -326,18 +604,17 @@ export class JenkinsResultsComponent implements OnInit, OnDestroy {
     if (this.passPercentageThreshold) {
       filtered = filtered.filter(r => this.getPassPercentage(r) >= this.passPercentageThreshold);
     }
+
     this.filteredResults = filtered;
   }
 
   applyTestCaseFilters(): void {
     let filtered = this.selectedJobTestCases;
 
-    // Apply status filter
     if (this.selectedTestCaseStatus) {
       filtered = filtered.filter(testCase => testCase.status === this.selectedTestCaseStatus);
     }
 
-    // Apply search filter
     if (this.testCaseSearchTerm.trim()) {
       const searchLower = this.testCaseSearchTerm.toLowerCase();
       filtered = filtered.filter(testCase =>
@@ -361,7 +638,6 @@ export class JenkinsResultsComponent implements OnInit, OnDestroy {
       let aVal: any = a[column as keyof JenkinsResult];
       let bVal: any = b[column as keyof JenkinsResult];
 
-      // Handle different data types
       if (column === 'buildTimestamp') {
         aVal = new Date(aVal).getTime();
         bVal = new Date(bVal).getTime();
@@ -390,7 +666,6 @@ export class JenkinsResultsComponent implements OnInit, OnDestroy {
       let aVal: any = a[column as keyof JenkinsTestCase];
       let bVal: any = b[column as keyof JenkinsTestCase];
 
-      // Handle different data types
       if (typeof aVal === 'string') {
         aVal = aVal.toLowerCase();
         bVal = bVal.toLowerCase();
@@ -609,7 +884,6 @@ export class JenkinsResultsComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Added helper methods for template
   getPassedTestCasesCount(): number {
     return this.filteredTestCases.filter(tc => tc.status === 'PASSED').length;
   }
@@ -628,10 +902,53 @@ export class JenkinsResultsComponent implements OnInit, OnDestroy {
     this.filteredTestCases = [];
     this.testCaseSearchTerm = '';
     this.selectedTestCaseStatus = '';
+    this.jobNotes = '';
+    this.originalNotes = '';
+    this.automationTesterSelection = {};
+    this.manualTesterSelection = {};
+    this.projectSelection = {};
+    this.saveButtonDisabled = true;
     this.destroyCharts();
     setTimeout(() => this.createOverallChart(), 100);
   }
 
+  // Helper methods for display
+  displayTester(tester: Tester | number | null | undefined): string {
+    if (!tester) {
+      return '';
+    }
+    if (typeof tester === 'number') {
+      const found = this.testers.find(t => t.id === tester);
+      return found ? found.name : tester.toString();
+    }
+    return tester.name;
+  }
+
+  displayProject(project: Project | number | null | undefined): string {
+    if (!project) {
+      return '';
+    }
+    if (typeof project === 'number') {
+      const found = this.projects.find(p => p.id === project);
+      return found ? found.name : project.toString();
+    }
+    return project.name;
+  }
+
+  // NEW: Get project name safely
+  getProjectName(result: JenkinsResult): string {
+    if (!result.project) {
+      return 'No Project';
+    }
+    return typeof result.project === 'object' ? result.project.name : 'Unknown Project';
+  }
+
+  // NEW: Get job frequency display
+  getJobFrequencyDisplay(result: JenkinsResult): string {
+    return result.jobFrequency || 'Unknown';
+  }
+
+  // Legacy methods - keeping for backward compatibility
   assignTesters(result: JenkinsResult): void {
     const automationId = this.automationTesterSelection[result.id] ?? null;
     const manualId = this.manualTesterSelection[result.id] ?? null;
@@ -652,7 +969,6 @@ export class JenkinsResultsComponent implements OnInit, OnDestroy {
             result.manualTester = tester;
           }
         }
-        // Clear selections
         this.automationTesterSelection[result.id] = null;
         this.manualTesterSelection[result.id] = null;
       },
@@ -669,16 +985,5 @@ export class JenkinsResultsComponent implements OnInit, OnDestroy {
       },
       (error) => console.error('Error saving job notes:', error)
     );
-  }
-
-  displayTester(tester: Tester | number | null | undefined): string {
-    if (!tester) {
-      return '';
-    }
-    if (typeof tester === 'number') {
-      const found = this.testers.find(t => t.id === tester);
-      return found ? found.name : tester.toString();
-    }
-    return tester.name;
   }
 }

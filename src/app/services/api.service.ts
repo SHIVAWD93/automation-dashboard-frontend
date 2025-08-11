@@ -6,7 +6,7 @@ import { Project } from '../models/project.model';
 import { Domain } from '../models/project.model';
 import { TestCase } from '../models/test-case.model';
 import { Tester } from '../models/tester.model';
-import { JenkinsResult, JenkinsTestCase, JenkinsStatistics, JenkinsConnectionTest } from '../models/jenkins.model';
+import { JenkinsResult, JenkinsTestCase, JenkinsStatistics, JenkinsConnectionTest, JenkinsFilters } from '../models/jenkins.model';
 import { environment } from '../../environment/environment';
 
 @Injectable({
@@ -198,6 +198,51 @@ export class ApiService {
   // Jenkins API methods
   getJenkinsResults(): Observable<JenkinsResult[]> {
     return this.http.get<JenkinsResult[]>(`${this.baseUrl}/jenkins/results`)
+      .pipe(catchError(this.handleError));
+  }
+
+  // NEW: Filtered Jenkins results method
+  getFilteredJenkinsResults(filters: JenkinsFilters): Observable<JenkinsResult[]> {
+    let params = new HttpParams();
+
+    if (filters.projectId) {
+      params = params.set('projectId', filters.projectId.toString());
+    }
+    if (filters.automationTesterId) {
+      params = params.set('automationTesterId', filters.automationTesterId.toString());
+    }
+    if (filters.jobFrequency) {
+      params = params.set('jobFrequency', filters.jobFrequency);
+    }
+    if (filters.buildStatus) {
+      params = params.set('buildStatus', filters.buildStatus);
+    }
+    if (filters.searchTerm) {
+      params = params.set('searchTerm', filters.searchTerm);
+    }
+    if (filters.passPercentageThreshold) {
+      params = params.set('passPercentageThreshold', filters.passPercentageThreshold.toString());
+    }
+
+    return this.http.get<JenkinsResult[]>(`${this.baseUrl}/jenkins/results/filtered`, { params })
+      .pipe(catchError(this.handleError));
+  }
+
+  // NEW: Get projects that have Jenkins results
+  getProjectsWithJenkinsResults(): Observable<Project[]> {
+    return this.http.get<Project[]>(`${this.baseUrl}/jenkins/projects`)
+      .pipe(catchError(this.handleError));
+  }
+
+  // NEW: Get unique job frequencies
+  getJobFrequencies(): Observable<string[]> {
+    return this.http.get<string[]>(`${this.baseUrl}/jenkins/job-frequencies`)
+      .pipe(catchError(this.handleError));
+  }
+
+  // NEW: Get automation testers that have Jenkins results
+  getAutomationTestersWithJenkinsResults(): Observable<Tester[]> {
+    return this.http.get<Tester[]>(`${this.baseUrl}/jenkins/automation-testers`)
       .pipe(catchError(this.handleError));
   }
 
@@ -404,16 +449,34 @@ export class ApiService {
   }
 
   // Jenkins job testers assignment and notes
-  assignTestersToJenkinsResult(resultId: number, automationTesterId: number | null, manualTesterId: number | null): Observable<any> {
-    const body = { automationTesterId, manualTesterId };
-    return this.http.post<any>(`${this.baseUrl}/jenkins/results/${resultId}/testers`, body, this.httpOptions)
-      .pipe(catchError(this.handleError));
-  }
+// ENHANCEMENT: Alternative method using the individual testers endpoint
+assignTestersToJenkinsResult(resultId: number, automationTesterId: number | null, manualTesterId: number | null): Observable<any> {
+  const body = { automationTesterId, manualTesterId };
+  return this.http.post<any>(`${this.baseUrl}/jenkins/results/${resultId}/testers`, body, this.httpOptions)
+    .pipe(catchError(this.handleError));
+}
+// ENHANCEMENT: Enhanced notes update method with proper request format
+updateJenkinsJobNotes(resultId: number, notes: { bugsIdentified?: string; failureReasons?: string; notes?: string }): Observable<any> {
+  // Send the notes in the format expected by the backend
+  const requestBody = {
+    bugsIdentified: notes.bugsIdentified || notes.notes || '',
+    failureReasons: notes.failureReasons || notes.notes || '',
+    notes: notes.notes || notes.bugsIdentified || ''
+  };
 
-  updateJenkinsJobNotes(resultId: number, notes: { bugsIdentified: string; failureReasons: string }): Observable<any> {
-    return this.http.put<any>(`${this.baseUrl}/jenkins/results/${resultId}/notes`, notes, this.httpOptions)
-      .pipe(catchError(this.handleError));
-  }
+  return this.http.put<any>(`${this.baseUrl}/jenkins/results/${resultId}/notes`, requestBody, this.httpOptions)
+    .pipe(catchError(this.handleError));
+}
+// ENHANCEMENT: Combined save method for notes and testers
+saveJenkinsJobData(resultId: number, data: {
+  notes?: string;
+  automationTesterId?: number | null;
+  manualTesterId?: number | null;
+  projectId?: number | null;
+}): Observable<any> {
+  return this.http.post<any>(`${this.baseUrl}/jenkins/results/${resultId}/save-all`, data, this.httpOptions)
+    .pipe(catchError(this.handleError));
+}
 
   /**
    * Enhanced error handler with better user messages
