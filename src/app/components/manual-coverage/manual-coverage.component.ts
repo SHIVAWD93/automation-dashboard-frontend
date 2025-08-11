@@ -117,11 +117,6 @@ export class ManualCoverageComponent implements OnInit {
   showKeywordModal = false;
   selectedTestCase: JiraTestCase | null = null;
   selectedIssue: JiraIssue | null = null;
-  
-  // Enhanced test case modal properties
-  selectedTestCaseProject: Project | null = null;
-  selectedTestCaseTester: Tester | null = null;
-  selectedTestCaseDomain: Domain | null = null;
 
   constructor(
     private fb: FormBuilder,
@@ -342,12 +337,6 @@ export class ManualCoverageComponent implements OnInit {
   openTestCaseModal(testCase: JiraTestCase, issue: JiraIssue): void {
     this.selectedTestCase = testCase;
     this.selectedIssue = issue;
-    
-    // Initialize dropdown selections with current values
-    this.selectedTestCaseProject = this.projects.find(p => p.id === testCase.projectId) || null;
-    this.selectedTestCaseTester = this.testers.find(t => t.id === testCase.assignedTesterId) || null;
-    this.selectedTestCaseDomain = this.domains.find(d => d.name === testCase.domainMapped) || null;
-    
     this.showTestCaseModal = true;
   }
 
@@ -545,20 +534,6 @@ export class ManualCoverageComponent implements OnInit {
     }
   }
 
-  // Transform automation status for display
-  getAutomationStatusDisplay(status: string): string {
-    switch (status) {
-      case 'READY_TO_AUTOMATE':
-        return 'Ready to Automate';
-      case 'NOT_AUTOMATABLE':
-        return 'Not Automatable';
-      case 'PENDING':
-        return 'Pending';
-      default:
-        return status;
-    }
-  }
-
   getSprintStateColor(state: string): string {
     switch (state?.toLowerCase()) {
       case 'active':
@@ -595,65 +570,11 @@ export class ManualCoverageComponent implements OnInit {
     this.currentPage = 1;
   }
 
-  // Enhanced test case information save functionality
-  saveTestCaseInformation(): void {
-    if (!this.selectedTestCase || !this.hasTestCaseChanges()) {
-      return;
-    }
-
-    this.loading = true;
-    
-    const updateData = {
-      projectId: this.selectedTestCaseProject?.id || null,
-      testerId: this.selectedTestCaseTester?.id || null,
-      domainId: this.selectedTestCaseDomain?.id || null
-    };
-
-    this.apiService.updateTestCaseInformation(this.selectedTestCase.id, updateData).subscribe(
-      (updatedTestCase: JiraTestCase) => {
-        // Update the local test case data
-        this.updateLocalTestCase(updatedTestCase);
-        this.loading = false;
-        
-        // Update the selected test case for immediate UI feedback
-        this.selectedTestCase = updatedTestCase;
-        
-        // Show success message
-        console.log('Test case information updated successfully');
-      },
-      (error) => {
-        console.error('Error updating test case information:', error);
-        this.loading = false;
-      }
-    );
-  }
-
-  hasTestCaseChanges(): boolean {
-    if (!this.selectedTestCase) {
-      return false;
-    }
-
-    const currentProject = this.projects.find(p => p.id === this.selectedTestCase!.projectId);
-    const currentTester = this.testers.find(t => t.id === this.selectedTestCase!.assignedTesterId);
-    const currentDomain = this.domains.find(d => d.name === this.selectedTestCase!.domainMapped);
-
-    return (
-      this.selectedTestCaseProject !== currentProject ||
-      this.selectedTestCaseTester !== currentTester ||
-      this.selectedTestCaseDomain !== currentDomain
-    );
-  }
-
   // Modal close handlers
   closeTestCaseModal(): void {
     this.showTestCaseModal = false;
     this.selectedTestCase = null;
     this.selectedIssue = null;
-    
-    // Reset dropdown selections
-    this.selectedTestCaseProject = null;
-    this.selectedTestCaseTester = null;
-    this.selectedTestCaseDomain = null;
   }
 
   closeMappingModal(): void {
