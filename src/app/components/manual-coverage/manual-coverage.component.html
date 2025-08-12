@@ -207,6 +207,12 @@
                                                 <i class="fas fa-search" *ngIf="!globalSearchLoading"></i>
                                             </button>
                                         </div>
+                                        <div class="form-check form-check-inline mt-1">
+                                            <input class="form-check-input" type="checkbox" id="searchCurrentSprintOnly" [(ngModel)]="searchCurrentSprintOnly">
+                                            <label class="form-check-label small" for="searchCurrentSprintOnly">
+                                                Limit to current sprint
+                                            </label>
+                                        </div>
                                         <!-- Global Search Results -->
                                         <div class="global-search-results mt-2" *ngIf="globalSearchResult">
                                             <!-- Summary Badge -->

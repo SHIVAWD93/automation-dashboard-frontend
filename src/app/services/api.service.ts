@@ -351,11 +351,14 @@ export class ApiService {
   }
 
   // Global keyword search across all Jira tickets
-  globalKeywordSearch(keyword: string, jiraProjectKey?: string): Observable<any> {
-    const request = {
+  globalKeywordSearch(keyword: string, jiraProjectKey?: string, sprintId?: string): Observable<any> {
+    const request: any = {
       keyword: keyword,
       jiraProjectKey: jiraProjectKey || ''
     };
+    if (sprintId) {
+      request.sprintId = sprintId;
+    }
     return this.http.post<any>(`${this.baseUrl}/manual-page/global-keyword-search`, request, this.httpOptions)
       .pipe(
         catchError((error) => {
@@ -373,11 +376,14 @@ export class ApiService {
   }
 
   // Get global search count for a keyword  
-  getGlobalSearchCount(keyword: string, jiraProjectKey?: string): Observable<{ count: number; keyword: string }> {
-    const request = {
+  getGlobalSearchCount(keyword: string, jiraProjectKey?: string, sprintId?: string): Observable<{ count: number; keyword: string }> {
+    const request: any = {
       keyword: keyword,
       jiraProjectKey: jiraProjectKey || ''
     };
+    if (sprintId) {
+      request.sprintId = sprintId;
+    }
     return this.http.post<{ count: number; keyword: string }>(`${this.baseUrl}/manual-page/global-keyword-search`, request, this.httpOptions)
       .pipe(catchError(this.handleError));
   }
