@@ -128,6 +128,7 @@ export class ManualCoverageComponent implements OnInit {
   globalSearchLoading: boolean = false;
   globalSearchResult: { count: number; keyword: string; details?: any[] } | null = null;
   showGlobalSearchDetails: boolean = false;
+  searchCurrentSprintOnly: boolean = false; // New property
 
   constructor(
     private fb: FormBuilder,
@@ -771,7 +772,8 @@ export class ManualCoverageComponent implements OnInit {
     this.showGlobalSearchDetails = false;
     
     // Use the existing global keyword search endpoint
-    this.apiService.globalKeywordSearch(this.globalSearchKeyword.trim()).subscribe(
+    const sprintIdToUse = this.searchCurrentSprintOnly && this.selectedSprint ? this.selectedSprint.id : undefined;
+    this.apiService.globalKeywordSearch(this.globalSearchKeyword.trim(), this.selectedProjectForSprints?.jiraProjectKey, sprintIdToUse).subscribe(
       (result) => {
         console.log('Global search result:', result);
         
