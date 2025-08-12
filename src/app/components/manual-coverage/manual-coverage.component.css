@@ -741,3 +741,58 @@
   outline: none;
   box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
 }
+
+/* Global Search Results Table */
+.global-search-results-table {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+}
+
+.global-search-results-table h6 {
+  color: #495057;
+  font-weight: 600;
+}
+
+.issue-summary-text {
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.global-search-results-table .table {
+  margin-bottom: 0;
+}
+
+.global-search-results-table .table th {
+  border-top: none;
+  font-weight: 600;
+  color: #495057;
+  background-color: #e9ecef;
+}
+
+.global-search-results-table .table td {
+  vertical-align: middle;
+  padding: 0.75rem 0.5rem;
+}
+
+.global-search-results-table .badge {
+  font-size: 0.75rem;
+  padding: 0.35em 0.65em;
+}
+
+/* Responsive table adjustments */
+@media (max-width: 768px) {
+  .issue-summary-text {
+    max-width: 200px;
+  }
+  
+  .global-search-results-table .table-responsive {
+    font-size: 0.85rem;
+  }
+}
