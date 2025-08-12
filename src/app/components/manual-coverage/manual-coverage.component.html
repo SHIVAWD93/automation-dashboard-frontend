@@ -217,17 +217,20 @@
                                         <div class="global-search-results mt-2" *ngIf="globalSearchResult">
                                             <!-- Summary Badge -->
                                             <div class="search-summary-badge">
-                                                <div class="badge-container" [class]="globalSearchResult.count > 0 ? 'success' : 'warning'">
+                                                <div class="badge-container" [class]="(globalSearchResult.totalOccurrences || 0) > 0 ? 'success' : 'warning'">
                                                     <div class="badge-content">
                                                         <i class="fas fa-search me-2"></i>
-                                                        <span class="search-count">{{ globalSearchResult.count }}</span>
+                                                        <span class="search-count">{{ globalSearchResult.totalOccurrences || 0 }}</span>
                                                         <span class="search-text">
-                                                            <span *ngIf="globalSearchResult.count === 1">occurrence</span>
-                                                            <span *ngIf="globalSearchResult.count !== 1">occurrences</span>
+                                                            <span *ngIf="(globalSearchResult.totalOccurrences || 0) === 1">occurrence</span>
+                                                            <span *ngIf="(globalSearchResult.totalOccurrences || 0) !== 1">occurrences</span>
                                                             of
                                                         </span>
                                                         <span class="keyword-highlight">"{{ globalSearchResult.keyword }}"</span>
-                                                        <button *ngIf="globalSearchResult.count > 0" 
+                                                        <span class="ms-2 text-muted small">
+                                                            across {{ globalSearchResult.totalCount || 0 }} issues
+                                                        </span>
+                                                        <button *ngIf="(globalSearchResult.totalOccurrences || 0) > 0" 
                                                                 class="btn btn-sm btn-link details-toggle p-0 ms-2"
                                                                 (click)="toggleGlobalSearchDetails()">
                                                             <i class="fas" [class]="showGlobalSearchDetails ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
@@ -241,24 +244,24 @@
                                             </div>
 
                                             <!-- Detailed Results -->
-                                            <div class="search-details mt-3" *ngIf="showGlobalSearchDetails && globalSearchResult.details && globalSearchResult.details.length > 0">
+                                            <div class="search-details mt-3" *ngIf="showGlobalSearchDetails && globalSearchResult.matchingIssues && globalSearchResult.matchingIssues.length > 0">
                                                 <div class="details-container">
                                                     <h6 class="details-header">
                                                         <i class="fas fa-list-ul me-2"></i>
-                                                        Detailed Occurrences
+                                                        Quick Preview ({{ globalSearchResult.matchingIssues.length }} issues)
                                                     </h6>
                                                     <div class="details-list">
-                                                        <div class="detail-item" *ngFor="let detail of globalSearchResult.details; let i = index">
+                                                        <div class="detail-item" *ngFor="let detail of globalSearchResult.matchingIssues.slice(0, 5); let i = index">
                                                             <div class="item-header">
                                                                 <div class="issue-info">
-                                                                    <span class="issue-key">{{ detail.key || detail.issueKey }}</span>
-                                                                    <span class="issue-summary">{{ detail.summary || detail.title }}</span>
+                                                                    <span class="issue-key">{{ detail.key }}</span>
+                                                                    <span class="issue-summary">{{ detail.summary }}</span>
                                                                 </div>
                                                                 <div class="occurrence-count">
                                                                     <span class="badge bg-primary">
-                                                                        {{ detail.commentMatches || detail.matches || 1 }} 
-                                                                        <span *ngIf="(detail.commentMatches || detail.matches || 1) === 1">match</span>
-                                                                        <span *ngIf="(detail.commentMatches || detail.matches || 1) !== 1">matches</span>
+                                                                        {{ detail.occurrences }} 
+                                                                        <span *ngIf="detail.occurrences === 1">match</span>
+                                                                        <span *ngIf="detail.occurrences !== 1">matches</span>
                                                                     </span>
                                                                 </div>
                                                             </div>
@@ -270,6 +273,11 @@
                                                                     {{ detail.priority }}
                                                                 </span>
                                                             </div>
+                                                        </div>
+                                                        <div class="text-center mt-2" *ngIf="globalSearchResult.matchingIssues.length > 5">
+                                                            <small class="text-muted">
+                                                                View complete results in Statistics tab
+                                                            </small>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -497,46 +505,63 @@
                             </div>
                         </div>
 
-                        <!-- Project Breakdown -->
-                        <div class="project-breakdown" *ngIf="sprintStatistics.projectBreakdown">
-                            <h6 class="mb-3">Project Breakdown</h6>
+                        <!-- Global Search Results Table -->
+                        <div class="global-search-results-table" *ngIf="globalSearchResult && (globalSearchResult.totalOccurrences || 0) > 0">
+                            <h6 class="mb-3">
+                                <i class="fas fa-search me-2"></i>
+                                Global Search Results for "{{ globalSearchResult.keyword }}"
+                            </h6>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <div class="stat-card">
+                                        <div class="stat-value">{{ globalSearchResult.totalOccurrences || 0 }}</div>
+                                        <div class="stat-label">Total Occurrences</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="stat-card">
+                                        <div class="stat-value">{{ globalSearchResult.totalCount || 0 }}</div>
+                                        <div class="stat-label">Total Issues</div>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="table-responsive">
-                                <table class="table table-sm">
-                                    <thead>
-                                    <tr>
-                                        <th>Project</th>
-                                        <th>Ready to Automate</th>
-                                        <th>Not Automatable</th>
-                                        <th>Pending</th>
-                                        <th>Total</th>
-                                    </tr>
+                                <table class="table table-sm table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>JIRA Key</th>
+                                            <th>Summary</th>
+                                            <th>Type</th>
+                                            <th>Status</th>
+                                            <th>Priority</th>
+                                            <th>Occurrences</th>
+                                        </tr>
                                     </thead>
                                     <tbody>
-                                    <tr *ngFor="let project of sprintStatistics.projectBreakdown | keyvalue">
-                                        <td><strong>{{ project.key }}</strong></td>
-                                        <td>
-                                            <span class="badge bg-success">
-                                                {{ project.value['READY_TO_AUTOMATE'] || 0 }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span class="badge bg-danger">
-                                                {{ project.value['NOT_AUTOMATABLE'] || 0 }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span class="badge bg-warning">
-                                                {{ project.value['PENDING'] || 0 }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <strong>
-                                                {{ (project.value['READY_TO_AUTOMATE'] || 0) +
-                                                (project.value['NOT_AUTOMATABLE'] || 0) +
-                                                (project.value['PENDING'] || 0) }}
-                                            </strong>
-                                        </td>
-                                    </tr>
+                                        <tr *ngFor="let issue of globalSearchResult.matchingIssues">
+                                            <td>
+                                                <strong class="text-primary">{{ issue.key }}</strong>
+                                            </td>
+                                            <td>
+                                                <div class="issue-summary-text">{{ issue.summary }}</div>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-secondary">{{ issue.issueType }}</span>
+                                            </td>
+                                            <td>
+                                                <span class="badge" [class]="getStatusColor(issue.status)">
+                                                    {{ issue.status }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="badge" [class]="getPriorityColor(issue.priority)">
+                                                    {{ issue.priority }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-info">{{ issue.occurrences }}</span>
+                                            </td>
+                                        </tr>
                                     </tbody>
                                 </table>
                             </div>

@@ -126,7 +126,14 @@ export class ManualCoverageComponent implements OnInit {
   // Global search properties
   globalSearchKeyword: string = '';
   globalSearchLoading: boolean = false;
-  globalSearchResult: { count: number; keyword: string; details?: any[] } | null = null;
+  globalSearchResult: { 
+    count: number; 
+    keyword: string; 
+    details?: any[];
+    totalOccurrences?: number;
+    totalCount?: number;
+    matchingIssues?: any[];
+  } | null = null;
   showGlobalSearchDetails: boolean = false;
   searchCurrentSprintOnly: boolean = false; // New property
 
@@ -777,24 +784,31 @@ export class ManualCoverageComponent implements OnInit {
       (result) => {
         console.log('Global search result:', result);
         
-        // Extract count and details from the response
-        const count = result.totalMatches || result.totalCommentMatches || result.count || result.issues?.length || 0;
-        const details = result.issues || result.results || result.details || [];
-        
-        // If the response has a different structure, try to adapt
-        if (result.matchingIssues) {
-          details.push(...result.matchingIssues);
-        }
+        // Parse the new response format
+        const totalOccurrences = result.totalOccurrences || 0;
+        const totalCount = result.totalCount || 0;
+        const matchingIssues = result.matchingIssues || [];
         
         this.globalSearchResult = { 
-          count: count, 
+          count: totalOccurrences, // Use totalOccurrences for the main count
           keyword: this.globalSearchKeyword.trim(),
-          details: details
+          details: matchingIssues,
+          totalOccurrences: totalOccurrences,
+          totalCount: totalCount,
+          matchingIssues: matchingIssues
         };
+        
         this.globalSearchLoading = false;
         
+        // Auto-switch to statistics tab if there are results to show the full table
+        if (totalOccurrences > 0 && this.activeTab !== 'statistics') {
+          setTimeout(() => {
+            this.setActiveTab('statistics');
+          }, 1000); // Small delay to let user see the summary first
+        }
+        
         // Don't auto-hide if there are results to show
-        if (count === 0) {
+        if (totalOccurrences === 0) {
           setTimeout(() => {
             this.globalSearchResult = null;
           }, 3000);
