@@ -144,11 +144,223 @@
   margin-top: 0.25rem;
 }
 
-.global-search-result .badge {
-  font-size: 0.75rem;
-  padding: 0.5rem 0.75rem;
+/* Enhanced Global Search Results Styles */
+.global-search-results {
+  position: relative;
+  z-index: 1000;
+}
+
+.search-summary-badge {
+  position: relative;
+}
+
+.badge-container {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 20px;
+  padding: 2px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+}
+
+.badge-container.success {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+}
+
+.badge-container.warning {
+  background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+}
+
+.badge-content {
+  background: rgba(255, 255, 255, 0.95);
+  color: #333;
+  padding: 0.75rem 1rem;
+  border-radius: 18px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  backdrop-filter: blur(10px);
+}
+
+.search-count {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #667eea;
+  margin-right: 0.25rem;
+}
+
+.search-text {
+  margin-right: 0.25rem;
+}
+
+.keyword-highlight {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 0.2rem 0.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.details-toggle, .close-btn {
+  color: #667eea !important;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.details-toggle:hover, .close-btn:hover {
+  color: #5a6fd8 !important;
+  transform: scale(1.1);
+}
+
+/* Detailed Search Results */
+.search-details {
+  animation: fadeInDown 0.3s ease;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.details-container {
+  background: linear-gradient(135deg, #f8f9ff 0%, #e3f2fd 100%);
   border-radius: 15px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  padding: 1.5rem;
+  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.1);
+  border: 1px solid rgba(102, 126, 234, 0.2);
+}
+
+.details-header {
+  color: #667eea;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid rgba(102, 126, 234, 0.2);
+}
+
+.details-list {
+  max-height: 400px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #667eea #f1f1f1;
+}
+
+.details-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.details-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.details-list::-webkit-scrollbar-thumb {
+  background: #667eea;
+  border-radius: 10px;
+}
+
+.detail-item {
+  background: white;
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+
+.detail-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.5rem;
+}
+
+.issue-info {
+  flex: 1;
+}
+
+.issue-key {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.8rem;
+  display: inline-block;
+  margin-right: 0.75rem;
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+}
+
+.issue-summary {
+  color: #333;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.occurrence-count .badge {
+  font-size: 0.75rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 15px;
+  box-shadow: 0 2px 4px rgba(0, 123, 255, 0.3);
+}
+
+.item-meta {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.status-badge, .priority-badge {
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+/* Status Badge Colors */
+.status-done, .status-completed {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status-in-progress {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.status-to-do, .status-open {
+  background: #d1ecf1;
+  color: #0c5460;
+}
+
+/* Priority Badge Colors */
+.priority-highest, .priority-high {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.priority-medium {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.priority-low, .priority-lowest {
+  background: #d4edda;
+  color: #155724;
 }
 
 .search-box {

@@ -126,7 +126,8 @@ export class ManualCoverageComponent implements OnInit {
   // Global search properties
   globalSearchKeyword: string = '';
   globalSearchLoading: boolean = false;
-  globalSearchResult: { count: number; keyword: string } | null = null;
+  globalSearchResult: { count: number; keyword: string; details?: any[] } | null = null;
+  showGlobalSearchDetails: boolean = false;
 
   constructor(
     private fb: FormBuilder,
@@ -444,14 +445,25 @@ export class ManualCoverageComponent implements OnInit {
     );
   }
 
-  // Utility methods
+  // Utility methods with improved update logic
   updateLocalTestCase(updatedTestCase: JiraTestCase): void {
+    let updated = false;
+    
     for (const issue of this.jiraIssues) {
       const testCaseIndex = issue.linkedTestCases.findIndex(tc => tc.id === updatedTestCase.id);
       if (testCaseIndex !== -1) {
-        issue.linkedTestCases[testCaseIndex] = updatedTestCase;
+        // Merge the updated data with existing data
+        issue.linkedTestCases[testCaseIndex] = {
+          ...issue.linkedTestCases[testCaseIndex],
+          ...updatedTestCase
+        };
+        updated = true;
         break;
       }
+    }
+    
+    if (!updated) {
+      console.warn('Test case not found in local issues for update:', updatedTestCase.id);
     }
   }
 
@@ -607,72 +619,83 @@ export class ManualCoverageComponent implements OnInit {
     this.currentPage = 1;
   }
 
-  // Enhanced test case information save functionality
+  // Enhanced test case information save functionality with better state management
   saveTestCaseInformation(): void {
-    if (!this.selectedTestCase) {
-      return;
+    if (!this.selectedTestCase || this.loading) {
+      return; // Prevent double-clicking
     }
 
     this.loading = true;
+    const testCaseId = this.selectedTestCase.id;
     
-    // Save automation flags first
-    this.apiService.updateTestCaseAutomationFlags(this.selectedTestCase.id, {
-      canBeAutomated: this.selectedTestCase.canBeAutomated,
-      cannotBeAutomated: this.selectedTestCase.cannotBeAutomated
-    }).subscribe(
-      (automationResult) => {
-        // Then save the test case information if there are changes
-        if (this.hasInfoChanges()) {
-          const updateData = {
-            projectId: this.selectedTestCaseProject?.id || null,
-            testerId: this.selectedTestCaseTester?.id || null,
-            domainId: this.selectedTestCaseDomain?.id || null
-          };
+    // Create a promise chain for better control
+    const saveAutomationFlags = () => {
+      return this.apiService.updateTestCaseAutomationFlags(testCaseId, {
+        canBeAutomated: this.selectedTestCase!.canBeAutomated,
+        cannotBeAutomated: this.selectedTestCase!.cannotBeAutomated
+      }).toPromise();
+    };
 
-          this.apiService.updateTestCaseInformation(this.selectedTestCase!.id, updateData).subscribe(
-            (updatedTestCase: JiraTestCase) => {
-              // Update the local test case data
-              this.updateLocalTestCase(updatedTestCase);
-              this.loading = false;
-              
-              // Update the selected test case for immediate UI feedback
-              this.selectedTestCase = updatedTestCase;
-              
-              // Show success message
-              console.log('Test case information updated successfully');
-              
-              if (this.selectedSprint) {
-                this.loadSprintStatistics(this.selectedSprint.id);
-              }
-            },
-            (error) => {
-              console.error('Error updating test case information:', error);
-              // Even if test case info update fails, automation status was saved
-              this.updateLocalTestCase(automationResult);
-              this.loading = false;
-              console.log('Test case automation status updated successfully (info update failed)');
-              
-              if (this.selectedSprint) {
-                this.loadSprintStatistics(this.selectedSprint.id);
-              }
-            }
-          );
-        } else {
-          // Only automation flags were updated
+    const saveTestCaseInfo = () => {
+      if (!this.hasInfoChanges()) {
+        return Promise.resolve(null);
+      }
+      
+      const updateData = {
+        projectId: this.selectedTestCaseProject?.id || null,
+        testerId: this.selectedTestCaseTester?.id || null,
+        domainId: this.selectedTestCaseDomain?.id || null
+      };
+
+      return this.apiService.updateTestCaseInformation(testCaseId, updateData).toPromise();
+    };
+
+    // Execute saves in sequence
+    saveAutomationFlags()
+      .then((automationResult) => {
+        console.log('Automation flags updated successfully');
+        
+        // Update local test case with automation result
+        if (automationResult) {
           this.updateLocalTestCase(automationResult);
-          this.loading = false;
-          console.log('Test case automation status updated successfully');
           
-          if (this.selectedSprint) {
-            this.loadSprintStatistics(this.selectedSprint.id);
+          // Update selected test case for immediate UI feedback
+          if (this.selectedTestCase && this.selectedTestCase.id === testCaseId) {
+            this.selectedTestCase = { ...this.selectedTestCase, ...automationResult };
           }
         }
-      },
-      (error) => {
-        console.error('Error updating test case automation flags:', error);
+        
+        return saveTestCaseInfo();
+      })
+      .then((infoResult) => {
+        if (infoResult) {
+          console.log('Test case information updated successfully');
+          
+          // Update local test case with info result
+          this.updateLocalTestCase(infoResult);
+          
+          // Update selected test case for immediate UI feedback
+          if (this.selectedTestCase && this.selectedTestCase.id === testCaseId) {
+            this.selectedTestCase = { ...this.selectedTestCase, ...infoResult };
+          }
+        }
+        
         this.loading = false;
-      }
-    );
+        
+        // Refresh statistics
+        if (this.selectedSprint) {
+          this.loadSprintStatistics(this.selectedSprint.id);
+        }
+        
+        console.log('All updates completed successfully');
+      })
+      .catch((error) => {
+        console.error('Error saving test case:', error);
+        this.loading = false;
+        
+        // Show user-friendly error message
+        alert('Error saving test case. Please try again.');
+      });
   }
 
   // Helper method to check if test case information has changed
@@ -745,19 +768,35 @@ export class ManualCoverageComponent implements OnInit {
     
     this.globalSearchLoading = true;
     this.globalSearchResult = null;
+    this.showGlobalSearchDetails = false;
     
     // Use the existing global keyword search endpoint
     this.apiService.globalKeywordSearch(this.globalSearchKeyword.trim()).subscribe(
       (result) => {
-        // Extract count from the response
-        const count = result.totalMatches || result.count || result.length || 0;
-        this.globalSearchResult = { count: count, keyword: this.globalSearchKeyword.trim() };
+        console.log('Global search result:', result);
+        
+        // Extract count and details from the response
+        const count = result.totalMatches || result.totalCommentMatches || result.count || result.issues?.length || 0;
+        const details = result.issues || result.results || result.details || [];
+        
+        // If the response has a different structure, try to adapt
+        if (result.matchingIssues) {
+          details.push(...result.matchingIssues);
+        }
+        
+        this.globalSearchResult = { 
+          count: count, 
+          keyword: this.globalSearchKeyword.trim(),
+          details: details
+        };
         this.globalSearchLoading = false;
         
-        // Auto-hide result after 5 seconds
-        setTimeout(() => {
-          this.globalSearchResult = null;
-        }, 5000);
+        // Don't auto-hide if there are results to show
+        if (count === 0) {
+          setTimeout(() => {
+            this.globalSearchResult = null;
+          }, 3000);
+        }
       },
       (error) => {
         console.error('Global search error:', error);
@@ -772,5 +811,16 @@ export class ManualCoverageComponent implements OnInit {
         }, 3000);
       }
     );
+  }
+
+  // Toggle global search details view
+  toggleGlobalSearchDetails() {
+    this.showGlobalSearchDetails = !this.showGlobalSearchDetails;
+  }
+
+  // Clear global search results
+  clearGlobalSearchResults() {
+    this.globalSearchResult = null;
+    this.showGlobalSearchDetails = false;
   }
 }
