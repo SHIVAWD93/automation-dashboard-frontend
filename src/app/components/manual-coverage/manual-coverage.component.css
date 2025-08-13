@@ -796,3 +796,241 @@
     font-size: 0.85rem;
   }
 }
+
+/* Test Case Modal Improvements */
+.test-case-modal-content {
+  max-height: calc(90vh - 200px);
+  overflow-y: auto;
+}
+
+.test-case-modal-content .info-card {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 1rem;
+  border: 1px solid #dee2e6;
+}
+
+.test-case-modal-content .form-label {
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 0.5rem;
+}
+
+.test-case-modal-content .form-select {
+  border-radius: 6px;
+  border: 1px solid #ced4da;
+}
+
+.test-case-modal-content .form-select:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+/* Enhanced Automation Radio Buttons */
+.automation-controls {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 1.5rem;
+  border: 1px solid #dee2e6;
+}
+
+.automation-radio {
+  margin-right: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.automation-radio .form-check-input {
+  width: 1.2em;
+  height: 1.2em;
+  margin-top: 0.1em;
+  border: 2px solid #dee2e6;
+}
+
+.automation-radio .form-check-input:checked[type="radio"] {
+  background-color: #667eea;
+  border-color: #667eea;
+}
+
+.automation-radio .form-check-input:checked[type="radio"] + .form-check-label {
+  font-weight: 600;
+}
+
+.automation-radio .form-check-label {
+  font-weight: 500;
+  margin-left: 0.5rem;
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.automation-radio .form-check-label:hover {
+  background-color: rgba(102, 126, 234, 0.1);
+}
+
+.automation-radio .form-check-input:checked[type="radio"] + .form-check-label.text-success {
+  background-color: rgba(40, 167, 69, 0.1);
+  border: 1px solid rgba(40, 167, 69, 0.2);
+}
+
+.automation-radio .form-check-input:checked[type="radio"] + .form-check-label.text-danger {
+  background-color: rgba(220, 53, 69, 0.1);
+  border: 1px solid rgba(220, 53, 69, 0.2);
+}
+
+.automation-radio .form-check-input:checked[type="radio"] + .form-check-label.text-warning {
+  background-color: rgba(255, 193, 7, 0.1);
+  border: 1px solid rgba(255, 193, 7, 0.2);
+}
+
+/* Table Header Alignment Fix */
+.table thead th {
+  vertical-align: middle;
+  text-align: left;
+  padding: 0.75rem 0.5rem;
+  background-color: #f8f9fa;
+  border-bottom: 2px solid #dee2e6;
+  font-weight: 600;
+  color: #495057;
+  white-space: nowrap;
+}
+
+.table thead th[style*="cursor: pointer"] {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.table thead th[style*="cursor: pointer"]:hover {
+  background-color: #e9ecef;
+}
+
+.table tbody td {
+  vertical-align: middle;
+  padding: 0.75rem 0.5rem;
+}
+
+/* Modal Footer Improvements */
+.p-dialog .p-dialog-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #dee2e6;
+  background-color: #f8f9fa;
+}
+
+.p-dialog .p-dialog-footer .btn {
+  padding: 0.5rem 1.5rem;
+  font-weight: 500;
+  border-radius: 6px;
+}
+
+.p-dialog .p-dialog-footer .btn-success {
+  background-color: #28a745;
+  border-color: #28a745;
+}
+
+.p-dialog .p-dialog-footer .btn-success:hover {
+  background-color: #218838;
+  border-color: #1e7e34;
+}
+
+.p-dialog .p-dialog-footer .btn-secondary {
+  background-color: #6c757d;
+  border-color: #6c757d;
+}
+
+.p-dialog .p-dialog-footer .btn-secondary:hover {
+  background-color: #5a6268;
+  border-color: #545b62;
+}
+
+/* Responsive Modal Adjustments */
+@media (max-width: 768px) {
+  .test-case-modal-content .row {
+    margin: 0;
+  }
+  
+  .test-case-modal-content .col-lg-6 {
+    margin-bottom: 1rem;
+  }
+  
+  .automation-radio {
+    display: block;
+    margin-right: 0;
+    margin-bottom: 1rem;
+  }
+  
+  .automation-radio .form-check-label {
+    display: block;
+    width: 100%;
+    text-align: center;
+  }
+}
+
+/* Current Values Display */
+.current-values {
+  background: #e9ecef;
+  border-radius: 6px;
+  padding: 0.75rem;
+  border-left: 3px solid #667eea;
+}
+
+.current-values strong {
+  color: #495057;
+}
+
+.current-values small {
+  line-height: 1.6;
+}
+
+/* Table Column Widths and Alignment */
+.table .col-issue {
+  width: 12%;
+  min-width: 120px;
+}
+
+.table .col-summary {
+  width: 25%;
+  min-width: 200px;
+}
+
+.table .col-assignee {
+  width: 15%;
+  min-width: 140px;
+}
+
+.table .col-status {
+  width: 10%;
+  min-width: 100px;
+}
+
+.table .col-priority {
+  width: 10%;
+  min-width: 100px;
+}
+
+.table .col-testcases {
+  width: 12%;
+  min-width: 120px;
+}
+
+.table .col-keywords {
+  width: 8%;
+  min-width: 80px;
+}
+
+.table .col-actions {
+  width: 8%;
+  min-width: 80px;
+}
+
+/* Ensure table cells respect column widths */
+.table td {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.table .col-summary .issue-summary {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
