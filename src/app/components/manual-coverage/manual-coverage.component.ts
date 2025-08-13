@@ -158,9 +158,9 @@ export class ManualCoverageComponent implements OnInit {
         this.loadProjects(),
         this.loadTesters()
       ]);
-
-      // Load sprints after domains and projects are loaded
-      await this.loadSprints();
+      
+      // Don't load sprints automatically - wait for user selection
+      console.log('Initial data loaded. Sprints will be loaded when domain/project is selected.');
     } catch (error) {
       console.error('Error loading initial data:', error);
     }
@@ -636,57 +636,45 @@ export class ManualCoverageComponent implements OnInit {
     this.loading = true;
     const testCaseId = this.selectedTestCase.id;
     
-    // Create a promise chain for better control
-    const saveAutomationFlags = () => {
-      return this.apiService.updateTestCaseAutomationFlags(testCaseId, {
-        canBeAutomated: this.selectedTestCase!.canBeAutomated,
-        cannotBeAutomated: this.selectedTestCase!.cannotBeAutomated
-      }).toPromise();
-    };
-
-    const saveTestCaseInfo = () => {
-      if (!this.hasInfoChanges()) {
-        return Promise.resolve(null);
-      }
-      
+    // Prepare all updates to be saved together
+    const updates = [];
+    
+    // Add automation flags update
+    updates.push(
+      this.apiService.updateTestCaseAutomationFlags(testCaseId, {
+        canBeAutomated: this.selectedTestCase.canBeAutomated,
+        cannotBeAutomated: this.selectedTestCase.cannotBeAutomated
+      }).toPromise()
+    );
+    
+    // Add test case information update if there are changes
+    if (this.hasInfoChanges()) {
       const updateData = {
         projectId: this.selectedTestCaseProject?.id || null,
         testerId: this.selectedTestCaseTester?.id || null,
         domainId: this.selectedTestCaseDomain?.id || null
       };
-
-      return this.apiService.updateTestCaseInformation(testCaseId, updateData).toPromise();
-    };
-
-    // Execute saves in sequence
-    saveAutomationFlags()
-      .then((automationResult) => {
-        console.log('Automation flags updated successfully');
+      updates.push(
+        this.apiService.updateTestCaseInformation(testCaseId, updateData).toPromise()
+      );
+    }
+    
+    // Execute all updates in parallel
+    Promise.all(updates)
+      .then((results) => {
+        console.log('All updates completed successfully');
         
-        // Update local test case with automation result
-        if (automationResult) {
-          this.updateLocalTestCase(automationResult);
-          
-          // Update selected test case for immediate UI feedback
-          if (this.selectedTestCase && this.selectedTestCase.id === testCaseId) {
-            this.selectedTestCase = { ...this.selectedTestCase, ...automationResult };
+        // Update local test case with results
+        results.forEach((result) => {
+          if (result) {
+            this.updateLocalTestCase(result);
+            
+            // Update selected test case for immediate UI feedback
+            if (this.selectedTestCase && this.selectedTestCase.id === testCaseId) {
+              this.selectedTestCase = { ...this.selectedTestCase, ...result };
+            }
           }
-        }
-        
-        return saveTestCaseInfo();
-      })
-      .then((infoResult) => {
-        if (infoResult) {
-          console.log('Test case information updated successfully');
-          
-          // Update local test case with info result
-          this.updateLocalTestCase(infoResult);
-          
-          // Update selected test case for immediate UI feedback
-          if (this.selectedTestCase && this.selectedTestCase.id === testCaseId) {
-            this.selectedTestCase = { ...this.selectedTestCase, ...infoResult };
-          }
-        }
+        });
         
         this.loading = false;
         
@@ -695,7 +683,11 @@ export class ManualCoverageComponent implements OnInit {
           this.loadSprintStatistics(this.selectedSprint.id);
         }
         
-        console.log('All updates completed successfully');
+        // Close the modal after successful save
+        this.closeTestCaseModal();
+        
+        // Show success message
+        console.log('Test case updated successfully');
       })
       .catch((error) => {
         console.error('Error saving test case:', error);

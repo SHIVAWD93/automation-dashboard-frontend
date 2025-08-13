@@ -327,35 +327,35 @@
                                 <thead class="table-light">
                                 <tr>
                                     <!-- NEW: Sortable headers -->
-                                    <th style="cursor: pointer;" (click)="sortBy('jiraKey')">
+                                    <th class="col-issue" style="cursor: pointer;" (click)="sortBy('jiraKey')">
                                         Issue
                                         <i [class]="getSortIcon('jiraKey')"></i>
                                     </th>
-                                    <th style="cursor: pointer;" (click)="sortBy('summary')">
+                                    <th class="col-summary" style="cursor: pointer;" (click)="sortBy('summary')">
                                         Summary
                                         <i [class]="getSortIcon('summary')"></i>
                                     </th>
-                                    <th style="cursor: pointer;" (click)="sortBy('assigneeDisplayName')">
+                                    <th class="col-assignee" style="cursor: pointer;" (click)="sortBy('assigneeDisplayName')">
                                         Assignee
                                         <i [class]="getSortIcon('assigneeDisplayName')"></i>
                                     </th>
-                                    <th style="cursor: pointer;" (click)="sortBy('status')">
+                                    <th class="col-status" style="cursor: pointer;" (click)="sortBy('status')">
                                         Status
                                         <i [class]="getSortIcon('status')"></i>
                                     </th>
-                                    <th style="cursor: pointer;" (click)="sortBy('priority')">
+                                    <th class="col-priority" style="cursor: pointer;" (click)="sortBy('priority')">
                                         Priority
                                         <i [class]="getSortIcon('priority')"></i>
                                     </th>
-                                    <th style="cursor: pointer;" (click)="sortBy('linkedTestCases')">
+                                    <th class="col-testcases" style="cursor: pointer;" (click)="sortBy('linkedTestCases')">
                                         Test Cases
                                         <i [class]="getSortIcon('linkedTestCases')"></i>
                                     </th>
-                                    <th style="cursor: pointer;" (click)="sortBy('keywordCount')">
+                                    <th class="col-keywords" style="cursor: pointer;" (click)="sortBy('keywordCount')">
                                         Keywords
                                         <i [class]="getSortIcon('keywordCount')"></i>
                                     </th>
-                                    <th>Actions</th>
+                                    <th class="col-actions">Actions</th>
                                 </tr>
                                 </thead>
                                 <tbody>
@@ -577,15 +577,16 @@
 <!-- Test Case Modal -->
 <p-dialog [modal]="true"
           [(visible)]="showTestCaseModal"
-          [style]="{ width: '70rem' }"
+          [style]="{ width: '90vw', maxWidth: '1200px', height: '90vh', maxHeight: '800px' }"
           header="Test Case Details"
           [closable]="true"
           [dismissableMask]="false"
           [closeOnEscape]="false"
-          [blockScroll]="true">
-    <div *ngIf="selectedTestCase && selectedIssue">
-        <div class="row">
-            <div class="col-md-6">
+          [blockScroll]="true"
+          [resizable]="true">
+    <div *ngIf="selectedTestCase && selectedIssue" class="test-case-modal-content">
+        <div class="row g-3">
+            <div class="col-lg-6">
                 <h6 class="text-primary">Test Case Information</h6>
                 <div class="info-card">
                     <p><strong>Title:</strong> {{ selectedTestCase.qtestTitle }}</p>
@@ -603,8 +604,8 @@
                         </div>
                     </div>
                     
-                    <div class="row">
-                        <div class="col-md-12 mb-3">
+                    <div class="row g-2">
+                        <div class="col-12">
                             <label for="testCaseProject" class="form-label"><strong>Project:</strong></label>
                             <select class="form-select form-select-sm" 
                                     id="testCaseProject" 
@@ -617,8 +618,8 @@
                         </div>
                     </div>
                     
-                    <div class="row">
-                        <div class="col-md-12 mb-3">
+                    <div class="row g-2 mt-2">
+                        <div class="col-12">
                             <label for="testCaseTester" class="form-label"><strong>Assigned Tester:</strong></label>
                             <select class="form-select form-select-sm" 
                                     id="testCaseTester" 
@@ -631,8 +632,8 @@
                         </div>
                     </div>
                     
-                    <div class="row">
-                        <div class="col-md-12 mb-3">
+                    <div class="row g-2 mt-2">
+                        <div class="col-12">
                             <label for="testCaseDomain" class="form-label"><strong>Domain:</strong></label>
                             <select class="form-select form-select-sm" 
                                     id="testCaseDomain" 
@@ -646,7 +647,7 @@
                     </div>
                     
                     <!-- Display current values -->
-                    <div class="current-values mt-2">
+                    <div class="current-values mt-3">
                         <small class="text-muted">
                             <strong>Current Values:</strong><br>
                             Project: {{ selectedTestCase.projectName || 'Not mapped' }}<br>
@@ -656,7 +657,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-6">
+            <div class="col-lg-6">
                 <h6 class="text-primary">Related Jira Issue</h6>
                 <div class="info-card">
                     <p><strong>Key:</strong> {{ selectedIssue.jiraKey }}</p>
@@ -680,7 +681,7 @@
             <div class="col-12">
                 <h6 class="text-primary">Automation Assessment</h6>
                 <div class="automation-controls">
-                    <div class="form-check form-check-inline">
+                    <div class="form-check form-check-inline automation-radio">
                         <input class="form-check-input"
                                type="radio"
                                name="automationChoice"
@@ -693,7 +694,7 @@
                             Can be Automated
                         </label>
                     </div>
-                    <div class="form-check form-check-inline">
+                    <div class="form-check form-check-inline automation-radio">
                         <input class="form-check-input"
                                type="radio"
                                name="automationChoice"
@@ -706,7 +707,7 @@
                             Cannot be Automated
                         </label>
                     </div>
-                    <div class="form-check form-check-inline">
+                    <div class="form-check form-check-inline automation-radio">
                         <input class="form-check-input"
                                type="radio"
                                name="automationChoice"
@@ -725,17 +726,19 @@
     </div>
 
     <ng-template pTemplate="footer">
-        <button class="btn btn-secondary me-2" (click)="closeTestCaseModal()">
-            <i class="fas fa-times me-1"></i>
-            Close
-        </button>
-        <button class="btn btn-success" 
-                (click)="saveTestCaseInformation()" 
-                [disabled]="loading || !hasTestCaseChanges()">
-            <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
-            <i class="fas fa-save me-1" *ngIf="!loading"></i>
-            {{ loading ? 'Saving...' : 'Save Changes' }}
-        </button>
+        <div class="d-flex justify-content-between w-100">
+            <button class="btn btn-secondary" (click)="closeTestCaseModal()">
+                <i class="fas fa-times me-1"></i>
+                Close
+            </button>
+            <button class="btn btn-success" 
+                    (click)="saveTestCaseInformation()" 
+                    [disabled]="loading || !hasTestCaseChanges()">
+                <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
+                <i class="fas fa-save me-1" *ngIf="!loading"></i>
+                {{ loading ? 'Saving...' : 'Save Changes' }}
+            </button>
+        </div>
     </ng-template>
 </p-dialog>
 
