@@ -354,15 +354,84 @@ export class ManualCoverageComponent implements OnInit {
 
   // Test Case Management
   openTestCaseModal(testCase: JiraTestCase, issue: JiraIssue): void {
-    this.selectedTestCase = testCase;
-    this.selectedIssue = issue;
+    // Create a deep copy to avoid reference issues
+    this.selectedTestCase = { ...testCase };
+    this.selectedIssue = { ...issue };
     
     // Initialize dropdown selections with current values
     this.selectedTestCaseProject = this.projects.find(p => p.id === testCase.projectId) || null;
     this.selectedTestCaseTester = this.testers.find(t => t.id === testCase.assignedTesterId) || null;
     this.selectedTestCaseDomain = this.domains.find(d => d.name === testCase.domainMapped) || null;
     
+    // Ensure automation status is properly set
+    if (this.selectedTestCase && this.selectedTestCase.canBeAutomated) {
+      this.selectedTestCase.automationStatus = 'READY_TO_AUTOMATE';
+    } else if (this.selectedTestCase && this.selectedTestCase.cannotBeAutomated) {
+      this.selectedTestCase.automationStatus = 'NOT_AUTOMATABLE';
+    } else if (this.selectedTestCase) {
+      this.selectedTestCase.automationStatus = 'PENDING';
+    }
+    
+    console.log('Opening test case modal with:', {
+      testCase: this.selectedTestCase,
+      project: this.selectedTestCaseProject,
+      tester: this.selectedTestCaseTester,
+      domain: this.selectedTestCaseDomain
+    });
+    
     this.showTestCaseModal = true;
+    
+    // Refresh test case data to ensure we have the latest information
+    this.refreshTestCaseData(testCase.id);
+  }
+
+  // Refresh test case data from the backend
+  refreshTestCaseData(testCaseId: number): void {
+    console.log('Refreshing test case data for ID:', testCaseId);
+    
+    this.apiService.getManualPageTestCaseById(testCaseId).subscribe(
+      (freshData: any) => {
+        console.log('Received fresh test case data:', freshData);
+        
+        // Update the selected test case with fresh data, ensuring required fields
+        if (this.selectedTestCase) {
+          this.selectedTestCase = { 
+            ...this.selectedTestCase, 
+            ...freshData,
+            // Ensure required fields are present
+            qtestTitle: freshData.qtestTitle || this.selectedTestCase.qtestTitle || 'Untitled',
+            canBeAutomated: freshData.canBeAutomated || false,
+            cannotBeAutomated: freshData.cannotBeAutomated || false,
+            automationStatus: freshData.automationStatus || 'PENDING'
+          };
+          
+          // Re-initialize dropdowns with fresh data
+          this.selectedTestCaseProject = this.projects.find(p => p.id === freshData.projectId) || null;
+          this.selectedTestCaseTester = this.testers.find(t => t.id === freshData.assignedTesterId) || null;
+          this.selectedTestCaseDomain = this.domains.find(d => d.name === freshData.domainMapped) || null;
+          
+          // Ensure automation status is properly set
+          if (this.selectedTestCase && this.selectedTestCase.canBeAutomated) {
+            this.selectedTestCase.automationStatus = 'READY_TO_AUTOMATE';
+          } else if (this.selectedTestCase && this.selectedTestCase.cannotBeAutomated) {
+            this.selectedTestCase.automationStatus = 'NOT_AUTOMATABLE';
+          } else if (this.selectedTestCase) {
+            this.selectedTestCase.automationStatus = 'PENDING';
+          }
+          
+          console.log('Test case data refreshed successfully:', {
+            testCase: this.selectedTestCase,
+            project: this.selectedTestCaseProject,
+            tester: this.selectedTestCaseTester,
+            domain: this.selectedTestCaseDomain
+          });
+        }
+      },
+      (error) => {
+        console.error('Error refreshing test case data:', error);
+        // Don't fail the modal opening, just log the error
+      }
+    );
   }
 
   // New method to handle automation status changes without auto-closing modal
@@ -636,6 +705,20 @@ export class ManualCoverageComponent implements OnInit {
     this.loading = true;
     const testCaseId = this.selectedTestCase.id;
     
+    console.log('Saving test case information:', {
+      testCaseId,
+      automationFlags: {
+        canBeAutomated: this.selectedTestCase.canBeAutomated,
+        cannotBeAutomated: this.selectedTestCase.cannotBeAutomated
+      },
+      hasInfoChanges: this.hasInfoChanges(),
+      infoChanges: {
+        projectId: this.selectedTestCaseProject?.id || null,
+        testerId: this.selectedTestCaseTester?.id || null,
+        domainId: this.selectedTestCaseDomain?.id || null
+      }
+    });
+    
     // Prepare all updates to be saved together
     const updates = [];
     
@@ -654,6 +737,9 @@ export class ManualCoverageComponent implements OnInit {
         testerId: this.selectedTestCaseTester?.id || null,
         domainId: this.selectedTestCaseDomain?.id || null
       };
+      
+      console.log('Sending mapping update:', updateData);
+      
       updates.push(
         this.apiService.updateTestCaseInformation(testCaseId, updateData).toPromise()
       );
@@ -662,7 +748,7 @@ export class ManualCoverageComponent implements OnInit {
     // Execute all updates in parallel
     Promise.all(updates)
       .then((results) => {
-        console.log('All updates completed successfully');
+        console.log('All updates completed successfully:', results);
         
         // Update local test case with results
         results.forEach((result) => {
@@ -694,7 +780,7 @@ export class ManualCoverageComponent implements OnInit {
         this.loading = false;
         
         // Show user-friendly error message
-        alert('Error saving test case. Please try again.');
+        alert(`Error saving test case: ${error.message || 'Please try again.'}`);
       });
   }
 
@@ -708,11 +794,29 @@ export class ManualCoverageComponent implements OnInit {
     const currentTester = this.testers.find(t => t.id === this.selectedTestCase!.assignedTesterId);
     const currentDomain = this.domains.find(d => d.name === this.selectedTestCase!.domainMapped);
 
-    return (
-      this.selectedTestCaseProject !== currentProject ||
-      this.selectedTestCaseTester !== currentTester ||
-      this.selectedTestCaseDomain !== currentDomain
-    );
+    const hasProjectChanged = this.selectedTestCaseProject !== currentProject;
+    const hasTesterChanged = this.selectedTestCaseTester !== currentTester;
+    const hasDomainChanged = this.selectedTestCaseDomain !== currentDomain;
+
+    console.log('Checking info changes:', {
+      current: {
+        project: currentProject?.id,
+        tester: currentTester?.id,
+        domain: currentDomain?.name
+      },
+      selected: {
+        project: this.selectedTestCaseProject?.id,
+        tester: this.selectedTestCaseTester?.id,
+        domain: this.selectedTestCaseDomain?.name
+      },
+      changes: {
+        project: hasProjectChanged,
+        tester: hasTesterChanged,
+        domain: hasDomainChanged
+      }
+    });
+
+    return hasProjectChanged || hasTesterChanged || hasDomainChanged;
   }
 
   hasTestCaseChanges(): boolean {

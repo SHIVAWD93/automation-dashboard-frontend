@@ -341,8 +341,24 @@ export class ApiService {
       testerId: updateData.testerId
       // Note: domainId will be handled by project selection
     };
+    
+    console.log('Sending mapping request to backend:', {
+      endpoint: `${this.baseUrl}/manual-page/test-cases/${testCaseId}/mapping`,
+      data: mappingData
+    });
+    
     return this.http.put<any>(`${this.baseUrl}/manual-page/test-cases/${testCaseId}/mapping`, mappingData, this.httpOptions)
-      .pipe(catchError(this.handleError));
+      .pipe(
+        catchError((error) => {
+          console.error('Mapping endpoint error:', {
+            status: error.status,
+            message: error.message,
+            url: error.url,
+            data: mappingData
+          });
+          return this.handleError(error);
+        })
+      );
   }
 
   searchKeywordInComments(jiraKey: string, request: { keyword: string }): Observable<any> {
@@ -417,6 +433,12 @@ export class ApiService {
   // Test Case management (separate from main test cases)
   getAllTestCases(): Observable<any[]> {
     return this.http.get<any[]>(`${this.baseUrl}/test-cases`)
+      .pipe(catchError(this.handleError));
+  }
+
+  // Get test case by ID for refreshing data
+  getManualPageTestCaseById(testCaseId: number): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/manual-page/test-cases/${testCaseId}`)
       .pipe(catchError(this.handleError));
   }
 
