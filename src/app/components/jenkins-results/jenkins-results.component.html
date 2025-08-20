@@ -163,15 +163,27 @@
 <!--                        </div>-->
                         <div class="col-md-3">
                             <label class="form-label">Pass Threshold %</label>
-                            <input
-                                    type="number"
-                                    class="form-control"
-                                    placeholder="Min pass %"
-                                    [(ngModel)]="passPercentageThreshold"
-                                    (input)="applyFilters()"
-                                    min="0"
-                                    max="100"
-                            >
+                            <div class="input-group">
+                                <select 
+                                    class="form-select"
+                                    [(ngModel)]="passPercentageOperator"
+                                    (change)="applyFilters()"
+                                    style="max-width: 80px; border-radius: 25px 0 0 25px;"
+                                >
+                                    <option value="gte">≥</option>
+                                    <option value="lte">≤</option>
+                                </select>
+                                <input
+                                        type="number"
+                                        class="form-control"
+                                        placeholder="Pass %"
+                                        [(ngModel)]="passPercentageThreshold"
+                                        (input)="applyFilters()"
+                                        min="0"
+                                        max="100"
+                                        style="border-radius: 0 25px 25px 0;"
+                                >
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -605,16 +617,14 @@
                                             {{ getFailureReason(testCase) }}
                                         </small>
                                     </div>
-                                    <!-- Stack trace button with hover tooltip -->
+                                    <!-- Stack trace button to open modal -->
                                     <button
                                             *ngIf="hasStackTrace(testCase)"
                                             class="btn btn-outline-danger btn-sm"
-                                            [title]="getTruncatedStackTrace(testCase)"
-                                            data-bs-toggle="tooltip"
-                                            data-bs-placement="left"
-                                            data-bs-html="true"
+                                            (click)="showFullStackTrace(testCase)"
+                                            title="Click to view full stack trace"
                                     >
-                                        <i class="fas fa-bug"></i> Stack Trace
+                                        <i class="fas fa-bug"></i> View Stack Trace
                                     </button>
                                     <small *ngIf="!hasStackTrace(testCase)" class="text-muted">
                                         No stack trace available
@@ -765,6 +775,38 @@
             </div>
         </div>
     </div>
+
+    <!-- Stack Trace Modal -->
+    <div class="modal-overlay" *ngIf="showStackTraceModal" (click)="closeStackTraceModal()">
+        <div class="modal-content stack-trace-modal" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+                <h2>
+                    <i class="fas fa-bug me-2"></i>
+                    Stack Trace - {{ selectedTestCaseName }}
+                </h2>
+                <button type="button" class="close-btn" (click)="closeStackTraceModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <div class="stack-trace-container">
+                    <pre class="stack-trace-content">{{ selectedStackTrace }}</pre>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" (click)="closeStackTraceModal()">
+                    <i class="fas fa-times me-2"></i>
+                    Close
+                </button>
+                <button class="btn btn-primary" (click)="copyStackTrace()">
+                    <i class="fas fa-copy me-2"></i>
+                    Copy to Clipboard
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Additional CSS for enhanced features -->
@@ -880,6 +922,74 @@
         font-weight: 500;
     }
 
+    /* Stack Trace Modal Styles */
+    .stack-trace-modal {
+        width: 1000px;
+        max-width: 95vw;
+        max-height: 90vh;
+    }
+
+    .stack-trace-container {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 0;
+        max-height: 60vh;
+        overflow: auto;
+    }
+
+    .stack-trace-content {
+        background: #2d3748;
+        color: #e2e8f0;
+        padding: 20px;
+        margin: 0;
+        font-family: 'Courier New', Consolas, monospace;
+        font-size: 0.875rem;
+        line-height: 1.4;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        border-radius: 8px;
+        max-height: none;
+        overflow: visible;
+    }
+
+    .stack-trace-content::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .stack-trace-content::-webkit-scrollbar-track {
+        background: #4a5568;
+        border-radius: 4px;
+    }
+
+    .stack-trace-content::-webkit-scrollbar-thumb {
+        background: #718096;
+        border-radius: 4px;
+    }
+
+    .stack-trace-content::-webkit-scrollbar-thumb:hover {
+        background: #a0aec0;
+    }
+
+    /* Enhanced input group styling */
+    .input-group .form-select {
+        border-right: none;
+    }
+
+    .input-group .form-control {
+        border-left: none;
+    }
+
+    .input-group .form-select:focus {
+        box-shadow: none;
+        border-color: #667eea;
+    }
+
+    .input-group .form-control:focus {
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        border-color: #667eea;
+    }
+
     /* Responsive improvements */
     @media (max-width: 768px) {
         .filter-controls {
@@ -896,6 +1006,16 @@
         .test-case-controls {
             flex-direction: column;
             gap: 10px !important;
+        }
+
+        .stack-trace-modal {
+            width: 100%;
+            max-width: 100%;
+        }
+
+        .stack-trace-content {
+            font-size: 0.75rem;
+            padding: 15px;
         }
     }
 </style>

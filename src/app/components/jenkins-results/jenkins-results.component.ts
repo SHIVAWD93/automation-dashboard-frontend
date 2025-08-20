@@ -78,6 +78,7 @@ export class JenkinsResultsComponent implements OnInit, OnDestroy {
   selectedAutomationTesterId: number | null = null;
   selectedJobFrequency = '';
   passPercentageThreshold: number = 0;
+  passPercentageOperator: 'gte' | 'lte' = 'gte'; // 'gte' for greater than or equal, 'lte' for less than or equal
 
   // Selection state for testers and projects
   automationTesterSelection: { [key: number]: number | null } = {};
@@ -94,6 +95,11 @@ export class JenkinsResultsComponent implements OnInit, OnDestroy {
   originalProject: number | null = null;
   showSuccessMessage = false;
   successMessage = '';
+
+  // Stack trace modal state
+  showStackTraceModal = false;
+  selectedStackTrace: string = '';
+  selectedTestCaseName: string = '';
 
   // NEW: Job frequency options
   jobFrequencyOptions = [
@@ -571,6 +577,43 @@ export class JenkinsResultsComponent implements OnInit, OnDestroy {
       : testCase.stackTrace;
   }
 
+  // Show full stack trace in modal
+  showFullStackTrace(testCase: JenkinsTestCase): void {
+    this.selectedStackTrace = testCase.stackTrace || '';
+    this.selectedTestCaseName = testCase.testName;
+    this.showStackTraceModal = true;
+  }
+
+  // Close stack trace modal
+  closeStackTraceModal(): void {
+    this.showStackTraceModal = false;
+    this.selectedStackTrace = '';
+    this.selectedTestCaseName = '';
+  }
+
+  // Copy stack trace to clipboard
+  copyStackTrace(): void {
+    if (this.selectedStackTrace) {
+      navigator.clipboard.writeText(this.selectedStackTrace).then(() => {
+        this.showSuccessToast('Stack trace copied to clipboard!');
+      }).catch(() => {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = this.selectedStackTrace;
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        try {
+          document.execCommand('copy');
+          this.showSuccessToast('Stack trace copied to clipboard!');
+        } catch (err) {
+          this.showSuccessToast('Failed to copy stack trace. Please copy manually.', true);
+        }
+        document.body.removeChild(textArea);
+      });
+    }
+  }
+
   onSearchChange(): void {
     this.applyFilters();
   }
@@ -602,7 +645,11 @@ export class JenkinsResultsComponent implements OnInit, OnDestroy {
     }
 
     if (this.passPercentageThreshold) {
-      filtered = filtered.filter(r => this.getPassPercentage(r) >= this.passPercentageThreshold);
+      if (this.passPercentageOperator === 'gte') {
+        filtered = filtered.filter(r => this.getPassPercentage(r) >= this.passPercentageThreshold);
+      } else {
+        filtered = filtered.filter(r => this.getPassPercentage(r) <= this.passPercentageThreshold);
+      }
     }
 
     this.filteredResults = filtered;
