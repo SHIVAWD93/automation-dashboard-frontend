@@ -10,7 +10,7 @@ import { SessionStorageService } from "./services/session-storage.service";
 export class AppComponent {
   title = "QA Automation Coverage Dashboard";
   authenticated: boolean = false;
-  
+
   constructor(
     private appService: AppService,
     private sessionStorageService: SessionStorageService
@@ -20,9 +20,9 @@ export class AppComponent {
       this.appService.isAuthorised = value;
     });
   }
-  
+
   logout() {
-    this.sessionStorageService.removeItem("userInfo");
+    this.sessionStorageService.removeAll();
     window.location.reload();
   }
 }

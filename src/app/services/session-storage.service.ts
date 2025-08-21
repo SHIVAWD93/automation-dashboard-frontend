@@ -54,4 +54,8 @@ export class SessionStorageService {
   removeItem(key: any): void {
     sessionStorage.removeItem(key);
   }
+
+  removeAll(): void {
+    sessionStorage.clear();
+  }
 }

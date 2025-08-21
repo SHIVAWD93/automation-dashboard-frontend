@@ -45,7 +45,8 @@ export class LoginDashboardComponent {
       this.appService.getUserInfo(username, password).subscribe({
         next: (user: any) => {
           this.sessionStorageService.saveWithExpiry('userInfo', user, 3600000);
-          this.appService.userPermission = user.userPermissions;
+          this.appService.userPermission = user.permission;
+          this.appService.token = user.token;
           this.appService.authenticated.next(true);
           this.authenticated.emit(true);
           this.router.navigate(["/dashboard"]);
@@ -115,6 +116,7 @@ export class LoginDashboardComponent {
     let value = this.sessionStorageService.getWithExpiry("userInfo");
     if (value) {
       this.appService.userPermission = value.userPermissions;
+      this.appService.token = value.token;
       this.appService.authenticated.next(true);
       this.authenticated.emit(true);
       this.router.navigate(["/dashboard"]);
