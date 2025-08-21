@@ -1,30 +1,38 @@
 import { Injectable } from '@angular/core';
 import {
+  HttpErrorResponse,
   HttpEvent,
   HttpHandler,
   HttpInterceptor,
   HttpRequest
 } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { catchError, Observable, throwError } from 'rxjs';
 import { AppService } from './services/app.service'; // Adjust the path as needed
+import { SessionStorageService } from './services/session-storage.service';
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
 
-  constructor(private appService: AppService) {}
+  constructor(private appService: AppService, private sessionStorageService : SessionStorageService) {}
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-    const token = this.appService.token; // You can make this async if needed
-
+ const token = this.appService.token;
+    let authReq = req;
     if (token) {
-      const authReq = req.clone({
+      authReq = req.clone({
         setHeaders: {
           Authorization: `Bearer ${token}`
         }
       });
-      return next.handle(authReq);
     }
-
-    return next.handle(req);
+    return next.handle(authReq).pipe(
+      catchError((error: HttpErrorResponse) => {
+        if (error.status === 401) {
+          this.sessionStorageService.removeAll();
+          window.location.reload();
+        }
+        return throwError(() => error);
+      })
+    );
   }
 }
