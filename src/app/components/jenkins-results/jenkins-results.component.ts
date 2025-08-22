@@ -564,6 +564,8 @@ export class JenkinsResultsComponent implements OnInit, OnDestroy {
     return '';
   }
 
+
+
   // Check if test case has stack trace
   hasStackTrace(testCase: JenkinsTestCase): boolean {
     return !!(testCase.stackTrace && testCase.stackTrace.trim());
