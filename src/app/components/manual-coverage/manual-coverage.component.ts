@@ -302,9 +302,10 @@ export class ManualCoverageComponent implements OnInit {
     }
 
     this.selectedSprint = sprint;
-    this.syncSprintIssues(sprint.id);
-    this.loadSprintStatistics(sprint.id);
     this.activeTab = 'issues';
+
+    // First sync the issues, then load statistics after completion
+    this.syncSprintIssues(sprint.id);
   }
 
   syncSprintIssues(sprintId: string): void {
@@ -318,13 +319,18 @@ export class ManualCoverageComponent implements OnInit {
       (issues: JiraIssue[]) => {
         this.jiraIssues = issues;
         this.loading = false;
+
+        // Load statistics AFTER issues are synced successfully
+        this.loadSprintStatistics(sprintId);
       },
       (error) => {
         console.error('Error syncing sprint issues:', error);
         this.loading = false;
+        // Don't load statistics if syncing failed
       }
     );
   }
+
 
   loadSprintStatistics(sprintId: string): void {
     this.apiService.getSprintStatistics(sprintId).subscribe(
