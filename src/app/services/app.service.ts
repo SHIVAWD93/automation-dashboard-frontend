@@ -10,6 +10,7 @@ import { BehaviorSubject } from "rxjs";
 export class AppService {
   userPermission: UserPermission | undefined;
   isAuthorised: boolean = false;
+  token:string = '';
   authenticated = new BehaviorSubject(false);
   constructor(private httpClient: HttpClient) {
   }

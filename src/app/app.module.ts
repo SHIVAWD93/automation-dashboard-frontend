@@ -1,7 +1,7 @@
 import { NgModule } from "@angular/core";
 import { BrowserModule } from "@angular/platform-browser";
 import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
-import { HttpClientModule } from "@angular/common/http";
+import { HTTP_INTERCEPTORS, HttpClientModule } from "@angular/common/http";
 import { FormsModule, ReactiveFormsModule } from "@angular/forms";
 
 import { AppRoutingModule } from "./app-routing.module";
@@ -24,6 +24,7 @@ import { ApiService } from "./services/api.service";
 // Custom Pipe for filtering (if needed)
 import { Pipe, PipeTransform } from "@angular/core";
 import { LoginDashboardComponent } from "./components/login-dashboard/login-dashboard.component";
+import { AuthInterceptor } from "./auth.interceptor";
 
 @Pipe({ name: "filter" })
 export class FilterPipe implements PipeTransform {
@@ -71,7 +72,11 @@ export class KeyValuePipe implements PipeTransform {
     CardModule,
     DialogModule,
   ],
-  providers: [ApiService],
+  providers: [ApiService, {
+      provide: HTTP_INTERCEPTORS,
+      useClass: AuthInterceptor,
+      multi: true
+    }],
   bootstrap: [AppComponent],
 })
 export class AppModule {}
